@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
-	"strconv"
+	"io/ioutil"
+	"net/http"
+	"os"
 	"time"
+
+	"github.com/c-rainbow/simplechatbot"
 )
 
 /*
@@ -47,10 +51,33 @@ func main() {
 }
 */
 
+func main2() {
+	response, err := http.Get("http://golang.org/")
+	if err != nil {
+		fmt.Printf("%s", err)
+		os.Exit(1)
+	} else {
+		defer response.Body.Close()
+		contents, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			fmt.Printf("%s", err)
+			os.Exit(1)
+		}
+		fmt.Printf("%s\n", string(contents))
+	}
+}
 func main() {
 	// simplechatbot.GoMain()
 
-	anow := time.Now()
+	// anow := time.Now()
 	// time.Now().Millisecond
-	fmt.Println("Now: " + strconv.FormatInt(anow.UnixNano(), 16))
+	// fmt.Println("Now: " + strconv.FormatInt(anow.UnixNano(), 16))
+	botInfo := simplechatbot.GetDefaultBotInfo()
+	chatBot := simplechatbot.NewDefaultChatBot(botInfo)
+	defer chatBot.Disconnect()
+	go chatBot.Connect()
+	fmt.Println("Conencted in main.go")
+	time.Sleep(10 * time.Second)
+	// chatBot.Disconnect()
+	// fmt.Println("Disconnected in main.go")
 }

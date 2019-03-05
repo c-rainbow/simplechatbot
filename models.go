@@ -8,19 +8,13 @@ type User struct {
 	Username string `json:"username"`
 }
 
-// Users multiple users.
-type Users []User
-
 // Bot contains info about Twitch chatbots. Usually there is only one.
 type Bot struct {
 	// Bot's Twitch username
 	Name string `json:"name"`
 	// Twitch Oauth token
-	OauthToken string `json:"oauthToken`
+	OauthToken string `json:"oauthToken"`
 }
-
-// Bots multiple bots.
-type Bots []Bot
 
 // Command contains info about chatbot commands.
 type Command struct {
@@ -32,14 +26,8 @@ type Command struct {
 	CooldownSecond int `json:"cooldownSecond"`
 }
 
-// Commands multiple commands.
-type Commands []Command
-
 // UserCommand which user has which commands
 type UserCommand struct {
-	User     User
-	Commands Commands
+	User     *User
+	Commands []*Command
 }
-
-// UserCommands multiple UserCommand
-type UserCommands []UserCommand
