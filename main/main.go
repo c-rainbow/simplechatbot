@@ -1,6 +1,10 @@
 package main
 
-import "github.com/c-rainbow/simplechatbot"
+import (
+	"fmt"
+	"strconv"
+	"time"
+)
 
 /*
 func getIRCClient() *Client {
@@ -44,5 +48,9 @@ func main() {
 */
 
 func main() {
-	simplechatbot.GoMain()
+	// simplechatbot.GoMain()
+
+	anow := time.Now()
+	// time.Now().Millisecond
+	fmt.Println("Now: " + strconv.FormatInt(anow.UnixNano(), 16))
 }

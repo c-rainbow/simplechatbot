@@ -332,4 +332,4 @@ ASALocalRun/
 
 # ==== Custom gitignore added by c-rainbow ====
 *.code-workspace
-.
+db/

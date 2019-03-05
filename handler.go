@@ -27,16 +27,16 @@ func (handler *MessageHandler) handlePrivmsg(c *girc.Client, e girc.Event) {
 
 	command := handler.getCommand(username, commandName)
 
-	if command.name != "" {
+	if command.Name != "" {
 		c.Cmd.Reply(e, "user: "+username) // command.response)
 	}
 }
 
 func (handler *MessageHandler) getCommand(username, commandName string) Command {
 	for _, userCommand := range handler.userCommands {
-		if userCommand.user.username == username {
-			for _, command := range userCommand.commands {
-				if command.name == commandName {
+		if userCommand.User.Username == username {
+			for _, command := range userCommand.Commands {
+				if command.Name == commandName {
 					return command
 				}
 			}
