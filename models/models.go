@@ -23,7 +23,7 @@ type Channel struct {
 	// Bots which join this channel
 	BotIDs []int64 `dynamo:",set"`
 	// Commands of the channel
-	Commands []Command `dynamo:",set"`
+	Commands []Command // `dynamo:",set"`
 }
 
 // User describes Twitch user. Not sure when this will be used.
@@ -42,6 +42,8 @@ type Command struct {
 	UUID string `dynamo:"ID,hash"`
 	// Bot's Twitch ID
 	BotID int64
+	// Channel's Twitch ID
+	ChannelID int64
 	// Command name
 	Name string
 	// Bot's Response, in parametrized string

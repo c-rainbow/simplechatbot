@@ -9,7 +9,7 @@ import (
 	"github.com/guregu/dynamo"
 )
 
-var DatabaseEndpoint = *flag.String("dynamodb-endpoint", "", "DynamoDB endpoint address")
+var DatabaseEndpoint = *flag.String("dynamodb-endpoint", "http://localhost:8000", "DynamoDB endpoint address")
 var DatabaseRegion = *flag.String("dynamodb-region", "us-west-2", "Default Region for DynamoDB")
 var DisableSSL = *flag.Bool("dynamodb-disable-ssl", true, "If true, disable SSL to connect to DynamoDB")
 
@@ -40,30 +40,33 @@ func (repo *BaseRepository) GetCommandByChannelAndName(channel string, command s
 	return nil
 }
 
+// GetAllBots returns all Bot models in the database.
 func (repo *BaseRepository) GetAllBots() []*models.Bot {
 	iter := repo.db.Table("Bots").Scan().Iter()
 	bots := []*models.Bot{}
 	for {
-		bot := models.Bot{}
-		hasNext := iter.Next(&bot)
+		bot := &models.Bot{}
+		hasNext := iter.Next(bot)
 		if !hasNext {
 			break
 		}
-		bots = append(bots, &bot)
+		bots = append(bots, bot)
 	}
 	return bots
 }
 
+// GetAllChannels returns all Channel models in the database.
+// TODO: If refactor is possible, merge with GetAllBots()
 func (repo *BaseRepository) GetAllChannels() []*models.Channel {
 	iter := repo.db.Table("Channels").Scan().Iter()
 	channels := []*models.Channel{}
 	for {
-		channel := models.Channel{}
-		hasNext := iter.Next(&channel)
+		channel := &models.Channel{}
+		hasNext := iter.Next(channel)
 		if !hasNext {
 			break
 		}
-		channels = append(channels, &channel)
+		channels = append(channels, channel)
 	}
 	return channels
 }

@@ -1,7 +1,6 @@
 package simplechatbot
 
-import "flag"
-
+/*
 var flagMap = map[string]interface{}{
 	"DynamoEndpoint":   *flag.String("dynamodb-endpoint", "", "DynamoDB endpoint address"),
 	"DynamoRegion":     *flag.String("dynamodb-region", "us-west-2", "Default Region for DynamoDB"),
@@ -23,3 +22,4 @@ func GetFlagBool(name string) bool {
 	}
 	return val
 }
+*/
