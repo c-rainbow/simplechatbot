@@ -12,7 +12,20 @@ import (
 )
 
 func main() {
-	mainChannel()
+	//mainChannel()
+	// findChannel()
+	mainBot()
+}
+
+func findChannel() {
+	botInfo := &models.Bot{TwitchID: 10, Username: "test_bot"}
+	repo := simplechatbot.NewSingleBotRepository(botInfo)
+	channels := repo.GetAllChannels()
+	fmt.Println("Len channel: ", len(channels))
+	for _, channel := range channels {
+		fmt.Println("Channel name: " + channel.Username)
+	}
+	// return channels
 }
 
 func mainChannel() {

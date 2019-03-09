@@ -2,6 +2,7 @@ package simplechatbot
 
 import (
 	"flag"
+	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -42,15 +43,10 @@ func (repo *BaseRepository) GetCommandByChannelAndName(channel string, command s
 
 // GetAllBots returns all Bot models in the database.
 func (repo *BaseRepository) GetAllBots() []*models.Bot {
-	iter := repo.db.Table("Bots").Scan().Iter()
 	bots := []*models.Bot{}
-	for {
-		bot := &models.Bot{}
-		hasNext := iter.Next(bot)
-		if !hasNext {
-			break
-		}
-		bots = append(bots, bot)
+	err := repo.db.Table("Bots").Scan().All(&bots)
+	if err != nil {
+		log.Fatal("Error while fetching all bot", err.Error())
 	}
 	return bots
 }
@@ -69,6 +65,19 @@ func (repo *BaseRepository) GetAllChannels() []*models.Channel {
 		channels = append(channels, channel)
 	}
 	return channels
+}
+
+func (repo *BaseRepository) GetChannel(channel models.Channel) *models.Channel {
+	err := repo.db.Table("Channels").Scan().Filter("contains(BotIDs, ?)", botID).One(&channels)
+}
+
+func (repo *BaseRepository) FilterCommands(filterStr string) []*models.Command {
+	commands := &[]*models.Command{}
+	err := repo.db.Table("Channels").Scan().Filter("contains(BotIDs, ?)", botID).All(&channels)
+	if err != nil {
+		log.Fatal("Error while finding channels for bot", err.Error())
+	}
+
 }
 
 /*
