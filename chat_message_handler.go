@@ -1,43 +1,39 @@
 package simplechatbot
 
 import (
-	"fmt"
 	"strings"
 
+	models "github.com/c-rainbow/simplechatbot/models"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
 
 type ChatMessageHandler struct {
-	// commands to handle
-	userCommandsMap map[string]map[string]*Command
-	botDataManager  *BotDataManager
-	ircClient       *TwitchClient
+	botInfo   *models.Bot
+	repo      *BaseRepository
+	ircClient *TwitchClient
 }
 
-func NewChatMessageHandler(ircClient *TwitchClient, botDataManager *BotDataManager) *ChatMessageHandler {
-	userCommands := (*botDataManager).GetAllUserCommands()
-
-	userCommandsMap := make(map[string]map[string]*Command)
-	for _, userCommand := range userCommands {
-		commandMap := make(map[string]*Command)
-		userCommandsMap[userCommand.User.Username] = commandMap
-		for _, command := range userCommand.Commands {
-			commandMap[command.Name] = command
-		}
-	}
-
-	return &ChatMessageHandler{
-		userCommandsMap: userCommandsMap, botDataManager: botDataManager, ircClient: ircClient}
+func NewChatMessageHandler(botInfo *models.Bot, repo *BaseRepository, ircClient *TwitchClient) *ChatMessageHandler {
+	return &ChatMessageHandler{botInfo: botInfo, repo: repo, ircClient: ircClient}
 }
 
-func (handler *ChatMessageHandler) OnNewMessage(channel string, user twitch_irc.User, message twitch_irc.Message) {
-	fmt.Println("Chat received: " + message.Text)
-	fmt.Println("Chat received raw: " + message.Raw)
-	commandText := strings.SplitN(message.Text, " ", 2)
-	if commandMap, ok := handler.userCommandsMap[channel]; ok {
-		if command, ok := commandMap[commandText[0]]; ok {
-			handler.ircClient.Say(channel, command.Response)
-		}
+func (handler *ChatMessageHandler) OnNewMessage(channel string, sender twitch_irc.User, message twitch_irc.Message) {
+	commandName := getCommandName(message.Text)
+	// TODO: permission check, spam check, etc.
+	command := handler.repo.GetCommandByChannelAndName(channel, commandName)
+	if command != nil { //
+		// response := command.Response
+		// TODO: Format response and send
+		// handler.ircClient.Say(response)
 	}
+}
 
+// Gets command name from the full chat text
+func getCommandName(text string) string {
+	index := strings.Index(text, " ")
+	// If there is no space in the chat text, then the chat itself is the command
+	if index == -1 {
+		return text
+	}
+	return text[:index]
 }

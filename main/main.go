@@ -1,13 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"os"
-	"time"
-
-	"github.com/c-rainbow/simplechatbot"
+	pack "github.com/c-rainbow/simplechatbot/db"
 )
 
 /*
@@ -51,8 +45,13 @@ func main() {
 }
 */
 
-func main2() {
-	response, err := http.Get("http://golang.org/")
+func main() {
+	pack.InitializeTables()
+}
+
+/*
+func main() {
+	response, err := http.Get("http://localhost:8000/shell")
 	if err != nil {
 		fmt.Printf("%s", err)
 		os.Exit(1)
@@ -66,7 +65,9 @@ func main2() {
 		fmt.Printf("%s\n", string(contents))
 	}
 }
-func main() {
+
+/*
+func main1() {
 	// simplechatbot.GoMain()
 
 	// anow := time.Now()
@@ -81,3 +82,4 @@ func main() {
 	// chatBot.Disconnect()
 	// fmt.Println("Disconnected in main.go")
 }
+*/

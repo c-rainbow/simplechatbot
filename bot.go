@@ -3,67 +3,37 @@
 package simplechatbot
 
 import (
-	"fmt"
 	"log"
+
+	models "github.com/c-rainbow/simplechatbot/models"
 )
 
 // TwitchChatBot Twitch chat bot struct
 type TwitchChatBot struct {
+	botInfo        *models.Bot
 	ircClient      *TwitchClient
-	botInfo        *Bot
-	userInfos      []*User
+	repo           *BaseRepository
 	messageHandler *ChatMessageHandler
 }
 
-func NewDefaultChatBot(botInfo *Bot) *TwitchChatBot {
-	ircClient := NewTwitchClient(botInfo.Name, botInfo.OauthToken)
-	fmt.Println("bot info: " + botInfo.Name)
-
-	var botDataManager BotDataManager = &PlainTextBotDataManager{}
-	userInfos := botDataManager.GetUserInfos()
-	messageHandler := NewChatMessageHandler(ircClient, &botDataManager)
-
+func NewTwitchChatBot(botInfo *models.Bot, ircClient *TwitchClient, repo *BaseRepository, messageHandler *ChatMessageHandler) *TwitchChatBot {
 	return &TwitchChatBot{
 		ircClient:      ircClient,
 		botInfo:        botInfo,
-		userInfos:      userInfos,
+		repo:           repo,
 		messageHandler: messageHandler,
 	}
 }
 
-func (bot *TwitchChatBot) Disconnect() {
-	fmt.Println("disconnecting.. 1")
-	bot.ircClient.Disconnect()
-	fmt.Println("disconnecting.. 2")
-}
-
 func (bot *TwitchChatBot) Connect() {
-	fmt.Println("connected? 1")
 	client := bot.ircClient
-	fmt.Println("connected? 2")
-	// TODO: add callback functions for operations
-	// client.OnNewWhisper(func(user twitch.User, message twitch.Message) {})
 	client.OnNewMessage(bot.messageHandler.OnNewMessage)
-	fmt.Println("connected? 3")
-
-	// client.OnNewRoomstateMessage(func(channel string, user twitch.User, message twitch.Message) {})
-	// client.OnNewClearchatMessage(func(channel string, user twitch.User, message twitch.Message) {})
-	// client.OnNewUsernoticeMessage(func(channel string, user twitch.User, message twitch.Message) {})
-	// client.OnNewNoticeMessage(func(channel string, user twitch.User, message twitch.Message) {})
-	// client.OnNewUserstateMessage(func(channel string, user twitch.User, message twitch.Message) {})
-	// client.OnUserJoin(func(channel, user string) {})
-	// client.OnUserPart(func(channel, user string) {})
-
-	// Join all channels assigned to this bot
-	for _, userInfo := range bot.userInfos {
-		client.Join(userInfo.Username)
-		fmt.Print("Joined " + userInfo.Username)
-	}
-	fmt.Println("connected? 4")
 	err := client.Connect()
-	fmt.Println("connected? 5")
 	if err != nil {
 		log.Fatal(err)
-		panic(err)
 	}
+}
+
+func (bot *TwitchChatBot) Disconnect() {
+	bot.ircClient.Disconnect()
 }
