@@ -6,24 +6,21 @@ import (
 
 // SingleChannelRepository repo for a single channel
 type SingleChannelRepository struct {
-	chanInfo        *models.Channel
-	commandsByBotID map[int64][]*models.Command
-	baseRepo        *BaseRepository
+	chanInfo *models.Channel
+	baseRepo *BaseRepository
 }
 
 // GetNewSingleChannelRepository returns a new single-channel repository
-func GetNewSingleChannelRepository(chanInfo *models.Channel, baseRepo *BaseRepository) {
-	commandsByBotID := map[int64][]*models.Command{}
-	for _, command := range chanInfo.Commands {
-		commandsByBotID[command.BotID] = append(commandsByBotID[command.BotID], &command)
-	}
+func GetNewSingleChannelRepository(chanInfo *models.Channel, baseRepo *BaseRepository) *SingleChannelRepository {
 	repo := &SingleChannelRepository{
-		chanInfo: chanInfo, commandsByBotID: commandsByBotID, baseRepo: baseRepo}
+		chanInfo: chanInfo, baseRepo: baseRepo}
+
+	return repo
 }
 
 // GetAllBotIDs returns IDs of all bots associated with this channel
 func (repo *SingleChannelRepository) GetAllBotIDs() []int64 {
-	// Copy BotIDs to prevent unexpected modification
+	// Copy BotIDs to prevent unexpected modification from outside
 	copiedIDs := append([]int64{}, repo.chanInfo.BotIDs...)
 	return copiedIDs
 }

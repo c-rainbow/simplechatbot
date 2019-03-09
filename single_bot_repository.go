@@ -38,3 +38,7 @@ func (repo *SingleBotRepository) GetAllChannels() []*models.Channel {
 
 	return channels
 }
+
+func (repo *SingleBotRepository) GetCommandByChannelAndName(channel string, commandName string) *models.Command {
+	return repo.baseRepo.GetCommand(repo.botInfo.TwitchID, channel, commandName)
+}
