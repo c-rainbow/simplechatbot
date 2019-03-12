@@ -7,14 +7,20 @@ import (
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
 
+type ChatMessageHandlerT interface {
+	OnNewMessage(channel string, sender twitch_irc.User, message twitch_irc.Message)
+}
+
 type ChatMessageHandler struct {
 	botInfo   *models.Bot
-	repo      *SingleBotRepository
+	repo      SingleBotRepositoryT
 	ircClient *TwitchClient
 }
 
+var _ ChatMessageHandlerT = (*ChatMessageHandler)(nil)
+
 func NewChatMessageHandler(
-	botInfo *models.Bot, repo *SingleBotRepository, ircClient *TwitchClient) *ChatMessageHandler {
+	botInfo *models.Bot, repo SingleBotRepositoryT, ircClient *TwitchClient) *ChatMessageHandler {
 	return &ChatMessageHandler{botInfo: botInfo, repo: repo, ircClient: ircClient}
 }
 

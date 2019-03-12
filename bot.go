@@ -12,11 +12,11 @@ import (
 type TwitchChatBot struct {
 	botInfo        *models.Bot
 	ircClient      *TwitchClient
-	repo           *BaseRepository
-	messageHandler *ChatMessageHandler
+	repo           BaseRepositoryT
+	messageHandler ChatMessageHandlerT
 }
 
-func NewTwitchChatBot(botInfo *models.Bot, ircClient *TwitchClient, repo *BaseRepository, messageHandler *ChatMessageHandler) *TwitchChatBot {
+func NewTwitchChatBot(botInfo *models.Bot, ircClient *TwitchClient, repo BaseRepositoryT, messageHandler ChatMessageHandlerT) *TwitchChatBot {
 	return &TwitchChatBot{
 		ircClient:      ircClient,
 		botInfo:        botInfo,

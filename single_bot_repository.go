@@ -9,14 +9,21 @@ import (
 	dynamo "github.com/guregu/dynamo"
 )
 
+type SingleBotRepositoryT interface {
+	GetAllChannels() []*models.Channel
+	GetCommandByChannelAndName(channel string, commandName string) *models.Command
+}
+
 // Repository for a single bot
 type SingleBotRepository struct {
 	botInfo  *models.Bot
-	baseRepo *BaseRepository
+	baseRepo BaseRepositoryT
 	db       *dynamo.DB
 }
 
-func NewSingleBotRepository(botInfo *models.Bot, baseRepo *BaseRepository) *SingleBotRepository {
+var _ SingleBotRepositoryT = (*SingleBotRepository)(nil)
+
+func NewSingleBotRepository(botInfo *models.Bot, baseRepo BaseRepositoryT) *SingleBotRepository {
 	// Initialize flag values
 	db := dynamo.New(session.New(), &aws.Config{
 		Endpoint:   aws.String(DatabaseEndpoint),
@@ -39,6 +46,7 @@ func (repo *SingleBotRepository) GetAllChannels() []*models.Channel {
 	return channels
 }
 
-func (repo *SingleBotRepository) GetCommandByChannelAndName(channel string, commandName string) *models.Command {
+func (repo *SingleBotRepository) GetCommandByChannelAndName(
+	channel string, commandName string) *models.Command {
 	return repo.baseRepo.GetCommand(repo.botInfo.TwitchID, channel, commandName)
 }

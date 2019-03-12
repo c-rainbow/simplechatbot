@@ -8,18 +8,35 @@ import (
 
 	"github.com/c-rainbow/simplechatbot"
 	examples "github.com/c-rainbow/simplechatbot/db/examples"
+	localrun "github.com/c-rainbow/simplechatbot/db/localrun"
 	models "github.com/c-rainbow/simplechatbot/models"
 )
 
 func main() {
-	//mainChannel()
-	// findChannel()
-	mainBot()
+	localrun.DeleteAllTables()
+	localrun.CreateAllTables()
+	localrun.AddNewBot()
+	localrun.AddNewChannel()
+}
+
+func mainScanDB() {
+	repo := simplechatbot.NewBaseRepository()
+
+	// Make sure that no bots exist first
+	bots := repo.GetAllBots()
+	fmt.Println("length: ", len(bots))
+
+	for _, bot := range bots {
+		fmt.Println("bot ID: ", bot.TwitchID)
+	}
+	_ = bots
+
+	// assert.Empty(t, bots)
 }
 
 func findChannel() {
 	botInfo := &models.Bot{TwitchID: 10, Username: "test_bot"}
-	repo := simplechatbot.NewSingleBotRepository(botInfo)
+	repo := simplechatbot.NewSingleBotRepository(botInfo, nil)
 	channels := repo.GetAllChannels()
 	fmt.Println("Len channel: ", len(channels))
 	for _, channel := range channels {

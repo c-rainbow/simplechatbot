@@ -2,6 +2,23 @@
 
 package models
 
+// User levels for command.
+// Externally, only Everyone, Moderator, Stremer will be available.
+const (
+	// Everyone can call the command
+	Everyone int = 1 << 0
+	// Follower only
+	Follower int = 1 << 1
+	// Subscriber only. VIP is also considered to be subscriber.
+	Subscriber int = 1 << 2
+	// Vip only
+	Vip int = 1 << 3
+	// Moderator only
+	Moderator int = 1 << 4
+	// Streamer only
+	Streamer int = 1 << 5
+)
+
 // Bot contains info about Twitch chatbots.
 type Bot struct {
 	// Bot's Twitch ID

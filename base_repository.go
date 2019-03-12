@@ -1,7 +1,6 @@
 package simplechatbot
 
 import (
-	"flag"
 	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -11,32 +10,31 @@ import (
 )
 
 const (
-	botTableName     = "Bots"
-	channelTableName = "Channels"
+	BotTableName     = "Bots"
+	ChannelTableName = "Channels"
 )
-
-var DatabaseEndpoint = *flag.String("dynamodb-endpoint", "http://localhost:8000", "DynamoDB endpoint address")
-var DatabaseRegion = *flag.String("dynamodb-region", "us-west-2", "Default Region for DynamoDB")
-var DisableSSL = *flag.Bool("dynamodb-disable-ssl", true, "If true, disable SSL to connect to DynamoDB")
 
 type CommandMapKey struct {
 	botID   int64
 	channel string
 }
 
-// RepositoryInterface interface to deal with persistent data
-type RepositoryInterface interface {
+// BaseRepositoryT interface to deal with persistent data
+type BaseRepositoryT interface {
 	GetAllBots() []*models.Bot
 	GetAllChannels() []*models.Channel
-
-	// For handlers to find command
-	GetCommandByChannelAndName(channel string, commandName string)
+	GetCommands(botID int64, channel string) map[string]*models.Command
+	GetCommand(botID int64, channel string, commandName string) *models.Command
+	CreateNewBot(botInfo *models.Bot) error
+	AddBotToChannel(botInfo *models.Bot, channelToAdd *models.Channel) error
 }
 
 type BaseRepository struct {
 	commandMap map[CommandMapKey]map[string]*models.Command
 	db         *dynamo.DB
 }
+
+var _ BaseRepositoryT = (*BaseRepository)(nil)
 
 func NewBaseRepository() *BaseRepository {
 	// Initialize flag values
@@ -51,7 +49,7 @@ func NewBaseRepository() *BaseRepository {
 // GetAllBots returns all Bot models in the database.
 func (repo *BaseRepository) GetAllBots() []*models.Bot {
 	bots := []*models.Bot{}
-	err := repo.db.Table(botTableName).Scan().All(&bots)
+	err := repo.db.Table(BotTableName).Scan().All(&bots)
 	if err != nil {
 		log.Fatal("Error while fetching all bots", err.Error())
 	}
@@ -61,7 +59,7 @@ func (repo *BaseRepository) GetAllBots() []*models.Bot {
 // GetAllChannels returns all Channel models in the database.
 func (repo *BaseRepository) GetAllChannels() []*models.Channel {
 	channels := []*models.Channel{}
-	err := repo.db.Table(channelTableName).Scan().All(&channels)
+	err := repo.db.Table(ChannelTableName).Scan().All(&channels)
 	if err != nil {
 		log.Fatal("Error while fetching all channels", err.Error())
 	}
@@ -83,8 +81,14 @@ func (repo *BaseRepository) GetCommand(botID int64, channel string, commandName 
 }
 
 func (repo *BaseRepository) CreateNewBot(botInfo *models.Bot) error {
-	botTable := repo.db.Table(botTableName)
+	botTable := repo.db.Table(BotTableName)
 	err := botTable.Put(botInfo).Run()
+	return err
+}
+
+func (repo *BaseRepository) CreateNewChannel(chanInfo *models.Channel) error {
+	chanTable := repo.db.Table(ChannelTableName)
+	err := chanTable.Put(chanInfo).Run()
 	return err
 }
 
@@ -93,7 +97,7 @@ func (repo *BaseRepository) AddBotToChannel(botInfo *models.Bot, channelToAdd *m
 	// 1. Check the bot ID is correct
 
 	// 2. Check the channel name exists && channel info is up-to-date.
-	chanTable := repo.db.Table(channelTableName)
+	chanTable := repo.db.Table(ChannelTableName)
 	channel := &models.Channel{}
 	err := chanTable.Get("Username", channelToAdd.Username).One(&channel)
 	if err != nil {
@@ -111,7 +115,7 @@ func (repo *BaseRepository) AddBotToChannel(botInfo *models.Bot, channelToAdd *m
 	}
 	// 4. Add the botID to the channel
 	if !botExists {
-		chanTable := repo.db.Table(channelTableName)
+		chanTable := repo.db.Table(ChannelTableName)
 		channel.BotIDs = append(channel.BotIDs, botInfo.TwitchID)
 		err := chanTable.Put(channel).Run()
 		return err
