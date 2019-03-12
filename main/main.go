@@ -8,15 +8,17 @@ import (
 
 	"github.com/c-rainbow/simplechatbot"
 	examples "github.com/c-rainbow/simplechatbot/db/examples"
-	localrun "github.com/c-rainbow/simplechatbot/db/localrun"
+	"github.com/c-rainbow/simplechatbot/db/localrun"
 	models "github.com/c-rainbow/simplechatbot/models"
 )
 
 func main() {
-	localrun.DeleteAllTables()
-	localrun.CreateAllTables()
-	localrun.AddNewBot()
-	localrun.AddNewChannel()
+	//localrun.DeleteAllTables()
+	//localrun.CreateAllTables()
+	//localrun.AddNewBot()
+	//localrun.AddNewChannel()
+	//localrun.GetChannelsForBot()
+	localrun.AddBotToChannel()
 }
 
 func mainScanDB() {

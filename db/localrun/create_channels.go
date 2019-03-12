@@ -24,7 +24,7 @@ func AddNewChannel() {
 		Commands: []models.Command{
 			models.Command{
 				UUID:      "a1b2c3d4e5f6",
-				BotID:     233,
+				BotID:     222,
 				Name:      "!test",
 				ChannelID: 1234,
 			},

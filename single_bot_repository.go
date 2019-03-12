@@ -1,12 +1,7 @@
 package simplechatbot
 
 import (
-	"log"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	models "github.com/c-rainbow/simplechatbot/models"
-	dynamo "github.com/guregu/dynamo"
 )
 
 type SingleBotRepositoryT interface {
@@ -18,31 +13,18 @@ type SingleBotRepositoryT interface {
 type SingleBotRepository struct {
 	botInfo  *models.Bot
 	baseRepo BaseRepositoryT
-	db       *dynamo.DB
 }
 
 var _ SingleBotRepositoryT = (*SingleBotRepository)(nil)
 
 func NewSingleBotRepository(botInfo *models.Bot, baseRepo BaseRepositoryT) *SingleBotRepository {
-	// Initialize flag values
-	db := dynamo.New(session.New(), &aws.Config{
-		Endpoint:   aws.String(DatabaseEndpoint),
-		Region:     aws.String(DatabaseRegion),
-		DisableSSL: aws.Bool(DisableSSL),
-	})
-
-	return &SingleBotRepository{botInfo: botInfo, db: db}
+	return &SingleBotRepository{botInfo: botInfo, baseRepo: baseRepo}
 }
 
 // GetAllChannels returns all channels for this bot.
 func (repo *SingleBotRepository) GetAllChannels() []*models.Channel {
 	botID := repo.botInfo.TwitchID
-	channels := []*models.Channel{}
-	err := repo.db.Table("Channels").Scan().Filter("contains(BotIDs, ?)", botID).All(&channels)
-	if err != nil {
-		log.Fatal("Error while finding channels for bot", err.Error())
-	}
-
+	channels := repo.baseRepo.GetAllChannelsForBot(botID)
 	return channels
 }
 

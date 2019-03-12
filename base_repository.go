@@ -1,6 +1,7 @@
 package simplechatbot
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -23,6 +24,7 @@ type CommandMapKey struct {
 type BaseRepositoryT interface {
 	GetAllBots() []*models.Bot
 	GetAllChannels() []*models.Channel
+	GetAllChannelsForBot(botID int64) []*models.Channel
 	GetCommands(botID int64, channel string) map[string]*models.Command
 	GetCommand(botID int64, channel string, commandName string) *models.Command
 	CreateNewBot(botInfo *models.Bot) error
@@ -43,7 +45,29 @@ func NewBaseRepository() *BaseRepository {
 		Region:     aws.String(DatabaseRegion),
 		DisableSSL: aws.Bool(DisableSSL),
 	})
-	return &BaseRepository{db: db}
+
+	repo := &BaseRepository{
+		db: db, commandMap: make(map[CommandMapKey]map[string]*models.Command)}
+	repo.populateCommandMap()
+	return repo
+}
+
+func (repo *BaseRepository) populateCommandMap() {
+	channels := repo.GetAllChannels()
+	for _, channel := range channels {
+		// Populate all values of commandMap
+		for _, botID := range channel.BotIDs {
+			key := CommandMapKey{botID: botID, channel: channel.Username}
+			repo.commandMap[key] = map[string]*models.Command{}
+		}
+
+		// Add commands
+		for _, command := range channel.Commands {
+			key := CommandMapKey{botID: command.BotID, channel: channel.Username}
+			repo.commandMap[key][command.Name] = &command
+		}
+	}
+	fmt.Println("commandMap: ", repo.commandMap)
 }
 
 // GetAllBots returns all Bot models in the database.
@@ -66,6 +90,18 @@ func (repo *BaseRepository) GetAllChannels() []*models.Channel {
 	return channels
 }
 
+// GetAllChannels returns all channels for this bot.
+func (repo *BaseRepository) GetAllChannelsForBot(botID int64) []*models.Channel {
+	channels := []*models.Channel{}
+	err := repo.db.Table(ChannelTableName).Scan().Filter(
+		"contains(BotIDs, ?)", botID).All(&channels)
+	if err != nil {
+		log.Fatal("Error while finding channels for bot", err.Error())
+	}
+
+	return channels
+}
+
 // GetCommands returns map of command name to command model, for the bot and the channel
 // Empty map is returned if commands do not exist for the combination.
 func (repo *BaseRepository) GetCommands(botID int64, channel string) map[string]*models.Command {
@@ -80,18 +116,25 @@ func (repo *BaseRepository) GetCommand(botID int64, channel string, commandName 
 	return repo.commandMap[key][commandName]
 }
 
+// CreateNewBot adds a new bot to DynamoDB.
+// The function assumes that bot with the same key (TwitchID) does not already exist
 func (repo *BaseRepository) CreateNewBot(botInfo *models.Bot) error {
 	botTable := repo.db.Table(BotTableName)
 	err := botTable.Put(botInfo).Run()
 	return err
 }
 
+// CreateNewChannel adds a new channel to DynamoDB.
+// The function assumes that channel with the same key (TwitchID) does not already exist
 func (repo *BaseRepository) CreateNewChannel(chanInfo *models.Channel) error {
 	chanTable := repo.db.Table(ChannelTableName)
 	err := chanTable.Put(chanInfo).Run()
 	return err
 }
 
+// AddBotToChannel adds the bot to the channel.
+// It assumes that the bot is not already running in the channel.
+// TODO: needs testing
 func (repo *BaseRepository) AddBotToChannel(botInfo *models.Bot, channelToAdd *models.Channel) error {
 	// Procedures
 	// 1. Check the bot ID is correct
@@ -99,9 +142,10 @@ func (repo *BaseRepository) AddBotToChannel(botInfo *models.Bot, channelToAdd *m
 	// 2. Check the channel name exists && channel info is up-to-date.
 	chanTable := repo.db.Table(ChannelTableName)
 	channel := &models.Channel{}
-	err := chanTable.Get("Username", channelToAdd.Username).One(&channel)
+	err := chanTable.Get("ID", channelToAdd.TwitchID).Filter(
+		"$ = ?", "Username", channelToAdd.Username).One(&channel)
 	if err != nil {
-		log.Fatal("Error while retrieving channel: ", err.Error())
+		log.Fatal("Error while retrieving channelll: ", err.Error())
 		return err
 	}
 
@@ -110,7 +154,8 @@ func (repo *BaseRepository) AddBotToChannel(botInfo *models.Bot, channelToAdd *m
 	for _, botID := range channel.BotIDs {
 		if botID == botInfo.TwitchID {
 			botExists = true
-			break
+			fmt.Println("Bot is already running in the channel")
+			return nil
 		}
 	}
 	// 4. Add the botID to the channel
