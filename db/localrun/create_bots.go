@@ -16,7 +16,11 @@ func AddNewBot() {
 	fmt.Println("Number of existing bots: ", len(bots))
 
 	// Add one bot fixture
-	testBot := &models.Bot{TwitchID: 1234, Username: "test_bot", OauthToken: "asdf1234"}
+	testBot := &models.Bot{
+		TwitchID:   DefaultBotTwitchID,
+		Username:   DefaultBotUsername,
+		OauthToken: DefaultBotOauthToken,
+	}
 	repo.CreateNewBot(testBot)
 	bots = repo.GetAllBots()
 	fmt.Println("New number of existing bots: ", len(bots))

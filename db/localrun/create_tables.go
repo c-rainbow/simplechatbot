@@ -16,9 +16,9 @@ import (
 // The function assumes that tables with the same names do not exist.
 func CreateAllTables() error {
 	db := dynamo.New(session.New(), &aws.Config{
-		Endpoint:   aws.String("http://localhost:8000"),
-		Region:     aws.String("us-west-1"),
-		DisableSSL: aws.Bool(true),
+		Endpoint:   aws.String(simplechatbot.DatabaseEndpoint),
+		Region:     aws.String(simplechatbot.DatabaseRegion),
+		DisableSSL: aws.Bool(simplechatbot.DisableSSL),
 	})
 
 	// Creates Bots table.

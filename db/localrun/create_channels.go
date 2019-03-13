@@ -17,18 +17,8 @@ func AddNewChannel() {
 
 	// Add one channel fixture
 	testChannel := &models.Channel{
-		TwitchID:    1234,
-		Username:    "test_channel",
-		DisplayName: "Testchannel",
-		BotIDs:      []int64{111, 222, 333},
-		Commands: []models.Command{
-			models.Command{
-				UUID:      "a1b2c3d4e5f6",
-				BotID:     222,
-				Name:      "!test",
-				ChannelID: 1234,
-			},
-		},
+		TwitchID: DefaultChannelTwitchID,
+		Username: DefaultChannelUsername,
 	}
 	repo.CreateNewChannel(testChannel)
 	channels = repo.GetAllChannels()

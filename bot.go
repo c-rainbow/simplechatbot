@@ -16,7 +16,9 @@ type TwitchChatBot struct {
 	messageHandler ChatMessageHandlerT
 }
 
-func NewTwitchChatBot(botInfo *models.Bot, ircClient *TwitchClient, repo BaseRepositoryT, messageHandler ChatMessageHandlerT) *TwitchChatBot {
+func NewTwitchChatBot(
+	botInfo *models.Bot, ircClient *TwitchClient, repo BaseRepositoryT,
+	messageHandler ChatMessageHandlerT) *TwitchChatBot {
 	return &TwitchChatBot{
 		ircClient:      ircClient,
 		botInfo:        botInfo,
@@ -28,6 +30,13 @@ func NewTwitchChatBot(botInfo *models.Bot, ircClient *TwitchClient, repo BaseRep
 func (bot *TwitchChatBot) Connect() {
 	client := bot.ircClient
 	client.OnNewMessage(bot.messageHandler.OnNewMessage)
+
+	// Join all channels associated with this bot
+	channels := bot.repo.GetAllChannelsForBot(bot.botInfo.TwitchID)
+	for _, channel := range channels {
+		client.Join(channel.Username)
+	}
+
 	err := client.Connect()
 	if err != nil {
 		log.Fatal(err)

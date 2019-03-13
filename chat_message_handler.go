@@ -26,6 +26,13 @@ func NewChatMessageHandler(
 
 func (handler *ChatMessageHandler) OnNewMessage(channel string, sender twitch_irc.User, message twitch_irc.Message) {
 	commandName := getCommandName(message.Text)
+	if commandName == "hello" {
+		handler.ircClient.Say(channel, "hello back")
+	} else if commandName == "!quit" {
+		handler.ircClient.Depart(channel)
+		handler.ircClient.Disconnect()
+	}
+
 	// TODO: permission check, spam check, etc.
 	command := handler.repo.GetCommandByChannelAndName(channel, commandName)
 	if command != nil { //

@@ -12,10 +12,11 @@ import (
 // Deletes all tables in local DynamoDB.
 // WARNING: This command deletes all data and tables.
 func DeleteAllTables() error {
+	fmt.Println("endpoint: ", simplechatbot.DatabaseEndpoint)
 	db := dynamo.New(session.New(), &aws.Config{
-		Endpoint:   aws.String("http://localhost:8000"),
-		Region:     aws.String("us-west-1"),
-		DisableSSL: aws.Bool(true),
+		Endpoint:   aws.String(simplechatbot.DatabaseEndpoint),
+		Region:     aws.String(simplechatbot.DatabaseRegion),
+		DisableSSL: aws.Bool(simplechatbot.DisableSSL),
 	})
 
 	// Delete Bots table
