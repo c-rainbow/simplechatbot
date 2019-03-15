@@ -1,6 +1,7 @@
 package simplechatbot
 
 import (
+	"fmt"
 	"strings"
 
 	models "github.com/c-rainbow/simplechatbot/models"
@@ -15,22 +16,45 @@ type ChatMessageHandler struct {
 	botInfo   *models.Bot
 	repo      SingleBotRepositoryT
 	ircClient *TwitchClient
+	chatters  map[string]bool
 }
 
 var _ ChatMessageHandlerT = (*ChatMessageHandler)(nil)
 
 func NewChatMessageHandler(
 	botInfo *models.Bot, repo SingleBotRepositoryT, ircClient *TwitchClient) *ChatMessageHandler {
-	return &ChatMessageHandler{botInfo: botInfo, repo: repo, ircClient: ircClient}
+	return &ChatMessageHandler{botInfo: botInfo, repo: repo, ircClient: ircClient, chatters: make(map[string]bool)}
 }
 
 func (handler *ChatMessageHandler) OnNewMessage(channel string, sender twitch_irc.User, message twitch_irc.Message) {
+	fmt.Println("Chat received: ", message.Raw)
 	commandName := getCommandName(message.Text)
-	if commandName == "hello" {
-		handler.ircClient.Say(channel, "hello back")
-	} else if commandName == "!quit" {
+	commandName = strings.ToLower(commandName)
+
+	displayName := message.Tags["display-name"]
+	if displayName == "" {
+		displayName = sender.DisplayName
+	}
+
+	toSay := ""
+
+	if commandName == "hello" || commandName == "hi" {
+		toSay = "Hi " + displayName
+	} else if commandName == "안녕하세요" && sender.Username != "c_rainbow" {
+		toSay = displayName + " 님도 안녕하세요"
+	} else if commandName == "!quit" && sender.Username == "c_rainbow" {
 		handler.ircClient.Depart(channel)
 		handler.ircClient.Disconnect()
+	}
+
+	// Check for new chatter
+	if _, has := handler.chatters[displayName]; !has {
+		handler.chatters[displayName] = true
+		toSay = displayName + " 님 어서오세요 환영합니다"
+	}
+
+	if toSay != "" {
+		handler.ircClient.Say(channel, toSay)
 	}
 
 	// TODO: permission check, spam check, etc.
