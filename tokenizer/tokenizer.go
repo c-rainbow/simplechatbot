@@ -1,5 +1,7 @@
 package tokenizer
 
+import "fmt"
+
 const (
 	startVariable string = "$("
 	endVariable   string = ")"
@@ -23,8 +25,9 @@ func ParseResponse(response string) *ParsedResponse {
 	runeLen := len(runes)
 	for currentIndex < runeLen {
 		if isStartOfVariable(runes, currentIndex) {
+			// fmt.Println("in isSTartFoVariable")
 			// Add previous strings to token slice.
-			appendToken(parsed.Tokens, runes, startIndex, currentIndex)
+			appendToken(&parsed.Tokens, runes, startIndex, currentIndex)
 			// Parse variable
 			variableToken, endIndex := parseVariable(runes, currentIndex)
 			parsed.Tokens = append(parsed.Tokens, variableToken)
@@ -32,44 +35,58 @@ func ParseResponse(response string) *ParsedResponse {
 			startIndex = endIndex
 			currentIndex = endIndex
 		} else {
+			// fmt.Println("currentIndex incremented", currentIndex)
 			currentIndex++
 		}
 	}
-	appendToken(parsed.Tokens, runes, startIndex, currentIndex)
+	// fmt.Println("startIndex:", startIndex, ", endIndex:", currentIndex)
+	appendToken(&parsed.Tokens, runes, startIndex, currentIndex)
 
 	return parsed
 }
 
-func appendToken(tokens []Token, runes []rune, startIndex int, endIndex int) {
+func appendToken(tokens *[]Token, runes []rune, startIndex int, endIndex int) {
+	// fmt.Println("tokens before:", tokens)
 	if startIndex < endIndex {
-		tokens = append(tokens, Token{
+		*tokens = append(*tokens, Token{
 			RawText:   string(runes[startIndex:endIndex]),
 			TokenType: TextTokenType,
 		})
 	}
+	// fmt.Println("tokens after:", tokens)
 }
 
 // Returned int is start index of the new token (first index after the variable token)
 // It is assumed that the runes from fromIndex starts with startVariable "$(".
 func parseVariable(runes []rune, fromIndex int) (Token, int) {
-	startIndex := len(startVarRunes)
+	startIndex := fromIndex + len(startVarRunes)
+	fmt.Println("startIndex:", startIndex, ", fromIdnex:", fromIndex)
 	currentIndex := startIndex
-	token := Token{Arguments: []Token{}}
-	for currentIndex < len(runes) {
+	token := Token{TokenType: VariableTokenType}
+	hasNestedVariable := false
+	for currentIndex < len(runes) && !isEndOfVariable(runes, currentIndex) {
 		if isStartOfVariable(runes, currentIndex) {
-			appendToken(token.Arguments, runes, startIndex, currentIndex)
+			hasNestedVariable = true
+			fmt.Println("Start of variable index: ", currentIndex)
+			appendToken(&token.Arguments, runes, startIndex, currentIndex)
 			subToken, nextIndex := parseVariable(runes, currentIndex)
 			token.Arguments = append(token.Arguments, subToken)
 			startIndex = nextIndex
 			currentIndex = nextIndex
+			fmt.Println("End of variable index: ", currentIndex)
 		} else {
 			currentIndex++
 		}
 	}
-	token.RawText = string(runes[startIndex:currentIndex])
-	token.TokenType = VariableTokenType
-	appendToken(token.Arguments, runes, startIndex, currentIndex)
+	if hasNestedVariable {
+		appendToken(&token.Arguments, runes, startIndex, currentIndex)
+	}
 
+	if isEndOfVariable(runes, currentIndex) {
+		currentIndex++
+	}
+
+	token.RawText = string(runes[fromIndex:currentIndex])
 	return token, currentIndex
 }
 
@@ -81,6 +98,10 @@ func isStartOfVariable(runes []rune, fromIndex int) bool {
 		return false
 	}*/
 	return IsSubRune(runes, startVarRunes, fromIndex)
+}
+
+func isEndOfVariable(runes []rune, fromIndex int) bool {
+	return IsSubRune(runes, endVarRunes, fromIndex)
 }
 
 /*
