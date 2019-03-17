@@ -1,4 +1,4 @@
-package tokenizer
+package parser
 
 /*
 
@@ -32,15 +32,14 @@ To think about..
 */
 
 const (
-	startVariable string = "$("
-	endVariable   string = ")"
+	VariableStartTag string = "$("
+	VariableCloseTag string = ")"
 )
 
 var (
 	// Go doesn't allow creating slice in const section.
-	// These have to be in var section
-	startVarRunes = []rune(startVariable)
-	endVarRunes   = []rune(endVariable)
+	startVarRunes = []rune(VariableStartTag)
+	endVarRunes   = []rune(VariableCloseTag)
 )
 
 /*
@@ -58,9 +57,10 @@ func ParseResponse(response string) *ParsedResponse {
 	parsed := &ParsedResponse{}
 	parsed.RawText = response
 
+	// Working with multi-byte string in Go is painful. Let's just use runes.
+	runes := []rune(response)
 	startIndex := 0
 	currentIndex := 0
-	runes := []rune(response)
 	for currentIndex < len(runes) {
 		if isVariableStartTag(runes, currentIndex) {
 			// Add previous strings to token slice.
@@ -99,10 +99,10 @@ func parseVariable(runes []rune, fromIndex int) (Token, int) {
 	currentIndex := startIndex
 
 	token := Token{TokenType: VariableTokenType}
-	hasNestedVariable := false
+	// hasNestedVariable := false
 	for currentIndex < len(runes) && !isVariableEndTag(runes, currentIndex) {
 		if isVariableStartTag(runes, currentIndex) {
-			hasNestedVariable = true
+			// hasNestedVariable = true
 
 			// Create token for previous runes
 			appendToken(&token.Arguments, runes, startIndex, currentIndex)
@@ -121,9 +121,10 @@ func parseVariable(runes []rune, fromIndex int) (Token, int) {
 	// currentIndex until it reached end of slice, or found ending tag for variable.
 	// If there was nested variable, any texts after the last nested variable might
 	// have been unprocessed as token.
-	if hasNestedVariable {
-		appendToken(&token.Arguments, runes, startIndex, currentIndex)
-	}
+	// TODO: Token may be just appended.
+	//if hasNestedVariable {
+	appendToken(&token.Arguments, runes, startIndex, currentIndex)
+	//}
 
 	// This if-statement might not be needed, because the only case when
 	// runes[currentIndex] is not end tag is end of string.
@@ -141,4 +142,18 @@ func isVariableStartTag(runes []rune, fromIndex int) bool {
 
 func isVariableEndTag(runes []rune, fromIndex int) bool {
 	return IsSubRune(runes, endVarRunes, fromIndex)
+}
+
+// IsSubRune If runes is equal to subrunes from fromIndex.
+func IsSubRune(runes []rune, subrunes []rune, fromIndex int) bool {
+	if len(runes) < fromIndex+len(subrunes) {
+		return false
+	}
+	// compare all indexes of runes starting from "fromIndex"
+	for i, subRune := range subrunes {
+		if runes[fromIndex+i] != subRune {
+			return false
+		}
+	}
+	return true
 }

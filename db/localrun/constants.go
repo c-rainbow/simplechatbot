@@ -3,11 +3,11 @@ package localrun
 const (
 
 	// Info for default bot
-	DefaultBotTwitchID   = 0
+	DefaultBotTwitchID   = 402646798
 	DefaultBotUsername   = "" // Username, not display name
 	DefaultBotOauthToken = ""
 
 	// Info for default channel
-	DefaultChannelTwitchID = 0
-	DefaultChannelUsername = "" // Username, not display name
+	DefaultChannelTwitchID = 403883450
+	DefaultChannelUsername = "c_rainbow" // Username, not display name
 )

@@ -1,4 +1,4 @@
-package tokenizer
+package parser
 
 import (
 	"fmt"
@@ -60,6 +60,29 @@ func TestVariableEntireResponse(t *testing.T) {
 	assert.Equal(t, Token{
 		RawText:   "$(user)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "user",
+				TokenType: TextTokenType,
+			},
+		},
+	}, response.Tokens[0])
+}
+
+func TestVariableEntireResponseWithSpaceInName(t *testing.T) {
+	response := ParseResponse("$(  user   )")
+
+	assert.Equal(t, "$(  user   )", response.RawText)
+	assert.Equal(t, 1, len(response.Tokens))
+	assert.Equal(t, Token{
+		RawText:   "$(  user   )",
+		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "  user   ",
+				TokenType: TextTokenType,
+			},
+		},
 	}, response.Tokens[0])
 }
 
@@ -77,6 +100,12 @@ func TestVariablePartialResponse(t *testing.T) {
 	assert.Equal(t, Token{
 		RawText:   "$(user)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "user",
+				TokenType: TextTokenType,
+			},
+		},
 	}, response.Tokens[1])
 
 	assert.Equal(t, Token{
@@ -100,6 +129,12 @@ func TestVariableShortName(t *testing.T) {
 	assert.Equal(t, Token{
 		RawText:   "$(n)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "n",
+				TokenType: TextTokenType,
+			},
+		},
 	}, response.Tokens[1])
 }
 
@@ -119,6 +154,12 @@ func TestVariableSameVariableMultipleTimes(t *testing.T) {
 	assert.Equal(t, Token{
 		RawText:   "$(user)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "user",
+				TokenType: TextTokenType,
+			},
+		},
 	}, response.Tokens[1])
 
 	assert.Equal(t, Token{
@@ -129,6 +170,12 @@ func TestVariableSameVariableMultipleTimes(t *testing.T) {
 	assert.Equal(t, Token{
 		RawText:   "$(user)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "user",
+				TokenType: TextTokenType,
+			},
+		},
 	}, response.Tokens[3])
 }
 
@@ -148,6 +195,12 @@ func TestVariableMultipleVariables(t *testing.T) {
 	assert.Equal(t, Token{
 		RawText:   "$(user)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "user",
+				TokenType: TextTokenType,
+			},
+		},
 	}, response.Tokens[1])
 
 	assert.Equal(t, Token{
@@ -158,6 +211,12 @@ func TestVariableMultipleVariables(t *testing.T) {
 	assert.Equal(t, Token{
 		RawText:   "$(channel)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "channel",
+				TokenType: TextTokenType,
+			},
+		},
 	}, response.Tokens[3])
 }
 
@@ -175,6 +234,12 @@ func TestMultipleVariablesNoSpace(t *testing.T) {
 	assert.Equal(t, Token{
 		RawText:   "$(user)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "user",
+				TokenType: TextTokenType,
+			},
+		},
 	}, response.Tokens[1])
 
 	assert.Equal(t, Token{
@@ -185,6 +250,12 @@ func TestMultipleVariablesNoSpace(t *testing.T) {
 	assert.Equal(t, Token{
 		RawText:   "$(channel)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "channel",
+				TokenType: TextTokenType,
+			},
+		},
 	}, response.Tokens[3])
 
 	assert.Equal(t, Token{
@@ -220,6 +291,12 @@ func TestNestedVariable(t *testing.T) {
 	assert.Equal(t, Token{
 		RawText:   "$(user)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "user",
+				TokenType: TextTokenType,
+			},
+		},
 	}, vToken.Arguments[1])
 	assert.Equal(t, Token{
 		RawText:   "/01",
@@ -237,6 +314,12 @@ func TestNestedVariable2(t *testing.T) {
 	assert.Equal(t, Token{
 		RawText:   "$(user)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "user",
+				TokenType: TextTokenType,
+			},
+		},
 	}, response.Tokens[0])
 	assert.Equal(t, Token{
 		RawText:   " has followed for ",
@@ -256,6 +339,12 @@ func TestNestedVariable2(t *testing.T) {
 	assert.Equal(t, Token{
 		RawText:   "$(user)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "user",
+				TokenType: TextTokenType,
+			},
+		},
 	}, vToken.Arguments[1])
 }
 
@@ -268,10 +357,22 @@ func TestContinuousNestedVariables(t *testing.T) {
 	assert.Equal(t, Token{
 		RawText:   "$(display_name)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "display_name",
+				TokenType: TextTokenType,
+			},
+		},
 	}, response.Tokens[0])
 	assert.Equal(t, Token{
 		RawText:   "$(user)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "user",
+				TokenType: TextTokenType,
+			},
+		},
 	}, response.Tokens[1])
 
 	vToken := response.Tokens[2]
@@ -287,6 +388,12 @@ func TestContinuousNestedVariables(t *testing.T) {
 	assert.Equal(t, Token{
 		RawText:   "$(user)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "user",
+				TokenType: TextTokenType,
+			},
+		},
 	}, vToken.Arguments[1])
 }
 
@@ -316,6 +423,12 @@ func TestDeeplyNestedVariables1(t *testing.T) {
 	assert.Equal(t, Token{
 		RawText:   "$(b)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "b",
+				TokenType: TextTokenType,
+			},
+		},
 	}, nestedTokens2[1])
 	assert.Equal(t, Token{
 		RawText:   " c",
@@ -353,6 +466,12 @@ func TestUnfinishedNestedVariable1(t *testing.T) {
 	assert.Equal(t, Token{
 		RawText:   "$(user)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "user",
+				TokenType: TextTokenType,
+			},
+		},
 	}, nestedTokens1[1])
 	assert.Equal(t, Token{
 		RawText:   " . Thanks",
@@ -387,6 +506,12 @@ func TestUnfinishedNestedVariable2(t *testing.T) {
 	assert.Equal(t, Token{
 		RawText:   "$(user . Thanks)",
 		TokenType: VariableTokenType,
+		Arguments: []Token{
+			Token{
+				RawText:   "user . Thanks",
+				TokenType: TextTokenType,
+			},
+		},
 	}, nestedTokens1[1])
 }
 

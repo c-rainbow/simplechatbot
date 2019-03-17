@@ -21,15 +21,17 @@ func CreateAllTables() error {
 		DisableSSL: aws.Bool(simplechatbot.DisableSSL),
 	})
 
+	var err error
+
 	// Creates Bots table.
-	err := db.
+	/*err := db.
 		CreateTable(simplechatbot.BotTableName, &models.Bot{}).          // Create table
 		Project("Username-index", dynamo.IncludeProjection, "Username"). // Create index
 		Run()
 	if err != nil {
 		fmt.Println("Error while creating Bots table: " + err.Error())
 		return err
-	}
+	}*/
 
 	// Creates Channels table.
 	err = db.

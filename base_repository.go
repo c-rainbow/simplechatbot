@@ -1,6 +1,7 @@
 package simplechatbot
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -15,24 +16,29 @@ const (
 	ChannelTableName = "Channels"
 )
 
-type CommandMapKey struct {
+var (
+	CommandNameNotFoundError  = errors.New("Command name is not found")
+	CommandAlreadyExistsError = errors.New("Command name already exists")
+)
+
+/*type CommandMapKey struct {
 	botID   int64
 	channel string
-}
+}*/
 
 // BaseRepositoryT interface to deal with persistent data
 type BaseRepositoryT interface {
 	GetAllBots() []*models.Bot
 	GetAllChannels() []*models.Channel
 	GetAllChannelsForBot(botID int64) []*models.Channel
-	GetCommands(botID int64, channel string) map[string]*models.Command
+	/// GetCommands(botID int64, channel string) map[string]*models.Command
 	GetCommand(botID int64, channel string, commandName string) *models.Command
 	CreateNewBot(botInfo *models.Bot) error
 	AddBotToChannel(botInfo *models.Bot, channelToAdd *models.Channel) error
 }
 
 type BaseRepository struct {
-	commandMap map[CommandMapKey]map[string]*models.Command
+	channelMap map[string]*models.Channel // Channel name -> command name -> command model
 	db         *dynamo.DB
 }
 
@@ -46,28 +52,22 @@ func NewBaseRepository() *BaseRepository {
 		DisableSSL: aws.Bool(DisableSSL),
 	})
 
-	repo := &BaseRepository{
-		db: db, commandMap: make(map[CommandMapKey]map[string]*models.Command)}
-	repo.populateCommandMap()
+	channelMap := make(map[string]*models.Channel)
+
+	repo := &BaseRepository{db: db, channelMap: channelMap}
+	// This should be called after initialization because it uses another function of BaseRepository
+	repo.populateChannelMap()
 	return repo
 }
 
-func (repo *BaseRepository) populateCommandMap() {
+func (repo *BaseRepository) populateChannelMap() {
 	channels := repo.GetAllChannels()
 	for _, channel := range channels {
-		// Populate all values of commandMap
-		for _, botID := range channel.BotIDs {
-			key := CommandMapKey{botID: botID, channel: channel.Username}
-			repo.commandMap[key] = map[string]*models.Command{}
+		if channel.Commands == nil {
+			channel.Commands = make(map[string]models.Command)
 		}
-
-		// Add commands
-		for _, command := range channel.Commands {
-			key := CommandMapKey{botID: command.BotID, channel: channel.Username}
-			repo.commandMap[key][command.Name] = &command
-		}
+		repo.channelMap[channel.Username] = channel
 	}
-	fmt.Println("commandMap: ", repo.commandMap)
 }
 
 // GetAllBots returns all Bot models in the database.
@@ -104,16 +104,19 @@ func (repo *BaseRepository) GetAllChannelsForBot(botID int64) []*models.Channel 
 
 // GetCommands returns map of command name to command model, for the bot and the channel
 // Empty map is returned if commands do not exist for the combination.
-func (repo *BaseRepository) GetCommands(botID int64, channel string) map[string]*models.Command {
-	key := CommandMapKey{botID, channel}
-	return repo.commandMap[key]
-}
+/*func (repo *BaseRepository) GetCommands(botID int64, channel string) map[string]models.Command {
+	return repo.channelMap[channel].Commands
+}*/
 
 // GetCommand gets command by unique combination of (botID, channel, commandName)
 // returns nil if command does not exist with the combination
 func (repo *BaseRepository) GetCommand(botID int64, channel string, commandName string) *models.Command {
-	key := CommandMapKey{botID, channel}
-	return repo.commandMap[key][commandName]
+	command, exists := repo.channelMap[channel].Commands[commandName]
+	if exists {
+		return &command
+	} else {
+		return nil
+	}
 }
 
 // CreateNewBot adds a new bot to DynamoDB.
@@ -168,4 +171,51 @@ func (repo *BaseRepository) AddBotToChannel(botInfo *models.Bot, channelToAdd *m
 	return nil
 
 	// 5. (Outside of this file) Bot joins the channel
+}
+
+func (repo *BaseRepository) UpdateChannel(chanInfo *models.Channel) error {
+	chanTable := repo.db.Table(ChannelTableName)
+	err := chanTable.Put(chanInfo).Run()
+	return err
+}
+
+func (repo *BaseRepository) AddCommand(channel string, commandToAdd *models.Command) error {
+	chanInfo, exists := repo.getChannelAndCommandExists(channel, commandToAdd)
+	if exists {
+		return CommandAlreadyExistsError
+	}
+	chanInfo.Commands[commandToAdd.Name] = *commandToAdd
+
+	// TODO: Handle when DB update failed, then we have inconsistent state in channelMap
+	return repo.UpdateChannel(chanInfo)
+}
+
+func (repo *BaseRepository) EditCommand(channel string, commandToEdit *models.Command) error {
+	chanInfo, exists := repo.getChannelAndCommandExists(channel, commandToEdit)
+	if !exists {
+		return CommandNameNotFoundError
+	}
+	chanInfo.Commands[commandToEdit.Name] = *commandToEdit
+
+	// TODO: Handle when DB update failed, then we have inconsistent state in channelMap
+	return repo.UpdateChannel(chanInfo)
+}
+
+func (repo *BaseRepository) DeleteCommand(channel string, commandToDelete *models.Command) error {
+	chanInfo, exists := repo.getChannelAndCommandExists(channel, commandToDelete)
+	if !exists {
+		return CommandNameNotFoundError
+	}
+	delete(chanInfo.Commands, commandToDelete.Name)
+
+	// TODO: Handle when DB update failed, then we have inconsistent state in channelMap
+	return repo.UpdateChannel(chanInfo)
+}
+
+// Returns channel info
+func (repo *BaseRepository) getChannelAndCommandExists(
+	channel string, command *models.Command) (*models.Channel, bool) {
+	chanInfo := repo.channelMap[channel]
+	_, exists := chanInfo.Commands[command.Name]
+	return chanInfo, exists
 }

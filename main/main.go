@@ -8,6 +8,7 @@ import (
 
 	"github.com/c-rainbow/simplechatbot"
 	"github.com/c-rainbow/simplechatbot/db/localrun"
+	"github.com/c-rainbow/simplechatbot/models"
 )
 
 // Clean and re-populate DynamoDB tables with default bot and channel data
@@ -39,6 +40,7 @@ func main1() {
 
 // Run bot
 func main() {
+
 	baseRepo := simplechatbot.NewBaseRepository()
 	fmt.Println("line 1")
 	// chanModels := baseRepo.GetAllChannels()
@@ -57,4 +59,19 @@ func main() {
 	fmt.Println("line 7")
 	// chatBot.Disconnect()
 	// fmt.Println("Disconnected in main.go")
+
+}
+
+func mainDelete() {
+	baseRepo := simplechatbot.NewBaseRepository()
+	command := models.Command{
+		Name:           "hello",
+		BotID:          localrun.DefaultBotTwitchID,
+		ChannelID:      localrun.DefaultChannelTwitchID,
+		CooldownSecond: 3,
+	}
+	err := baseRepo.DeleteCommand(localrun.DefaultChannelUsername, &command)
+	if err != nil {
+		fmt.Println("DeleteCommand failed: ", err.Error())
+	}
 }
