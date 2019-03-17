@@ -1,5 +1,7 @@
 package parser
 
+import "strings"
+
 /*
 
 TODO: Arguments of variable is created differently from tokens of response,
@@ -32,14 +34,14 @@ To think about..
 */
 
 const (
-	VariableStartTag string = "$("
-	VariableCloseTag string = ")"
+	VariableStartTag   string = "$("
+	VariableClosingTag string = ")"
 )
 
 var (
 	// Go doesn't allow creating slice in const section.
 	startVarRunes = []rune(VariableStartTag)
-	endVarRunes   = []rune(VariableCloseTag)
+	endVarRunes   = []rune(VariableClosingTag)
 )
 
 /*
@@ -62,7 +64,7 @@ func ParseResponse(response string) *ParsedResponse {
 	startIndex := 0
 	currentIndex := 0
 	for currentIndex < len(runes) {
-		if isVariableStartTag(runes, currentIndex) {
+		if isVariableStartingTag(runes, currentIndex) {
 			// Add previous strings to token slice.
 			appendToken(&parsed.Tokens, runes, startIndex, currentIndex)
 
@@ -100,8 +102,8 @@ func parseVariable(runes []rune, fromIndex int) (Token, int) {
 
 	token := Token{TokenType: VariableTokenType}
 	// hasNestedVariable := false
-	for currentIndex < len(runes) && !isVariableEndTag(runes, currentIndex) {
-		if isVariableStartTag(runes, currentIndex) {
+	for currentIndex < len(runes) && !isVariableEndingTag(runes, currentIndex) {
+		if isVariableStartingTag(runes, currentIndex) {
 			// hasNestedVariable = true
 
 			// Create token for previous runes
@@ -121,26 +123,46 @@ func parseVariable(runes []rune, fromIndex int) (Token, int) {
 	// currentIndex until it reached end of slice, or found ending tag for variable.
 	// If there was nested variable, any texts after the last nested variable might
 	// have been unprocessed as token.
-	// TODO: Token may be just appended.
-	//if hasNestedVariable {
 	appendToken(&token.Arguments, runes, startIndex, currentIndex)
-	//}
 
-	// This if-statement might not be needed, because the only case when
-	// runes[currentIndex] is not end tag is end of string.
-	if isVariableEndTag(runes, currentIndex) {
+	// This increment may not need to be surrounded by if-statement, because
+	// the only case when runes[currentIndex] is not end tag is end of string.
+	if isVariableEndingTag(runes, currentIndex) {
 		currentIndex++
 	}
 
 	token.RawText = string(runes[fromIndex:currentIndex])
+	token.VariableName = GetVariableName(&token)
 	return token, currentIndex
 }
 
-func isVariableStartTag(runes []rune, fromIndex int) bool {
+// GetVariableName returns
+func GetVariableName(token *Token) string {
+	// Variable token with empty body "$()"
+	if len(token.Arguments) == 0 {
+		return ""
+	}
+
+	nameArg := token.Arguments[0]
+	// The first argument of the variable token should always be text.
+	// TokenType not being TextTokenType means nested variable in form of $($(a) b)
+	if nameArg.TokenType != TextTokenType {
+		return ""
+	}
+
+	// strings.Fields automatically deals with non-space whitespaces in the middle
+	fields := strings.Fields(nameArg.RawText)
+	if len(fields) == 0 {
+		return ""
+	}
+	return fields[0]
+}
+
+func isVariableStartingTag(runes []rune, fromIndex int) bool {
 	return IsSubRune(runes, startVarRunes, fromIndex)
 }
 
-func isVariableEndTag(runes []rune, fromIndex int) bool {
+func isVariableEndingTag(runes []rune, fromIndex int) bool {
 	return IsSubRune(runes, endVarRunes, fromIndex)
 }
 

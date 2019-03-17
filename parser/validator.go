@@ -6,22 +6,24 @@ import (
 )
 
 var (
-	EmptyResponseError          = errors.New("Response is empty")
+	// Errors
+	EmptyResponseError = errors.New("Response is empty")
+	EmptyTokenError    = errors.New("Token is empty")
+
 	VariableNameNotFoundError   = errors.New("Variable name is not found")
 	VariableNameNotTextError    = errors.New("Variable name cannot be another variable")
 	VariableNameNotAllowedError = errors.New("Variable name is not allowed")
+
 	VariableHasNoCloseTagError  = errors.New("Variable has no closing tag")
 	VariableCanNotBeNestedError = errors.New("Variable can no be nested")
+	VariableNotEnabledError     = errors.New("Variable is not enabled")
 )
 
-/*
-Validation logic:
+// Variables that can be nested in another variable as argument
+var NestableVariableNames = []string{
+	User, UserID, DisplayName, Channel, SubscribeLink, Commands,
+}
 
-(1) For TextTypeToken, it is always valid as long as it is not empty string token
-(2) For VariableTypeToken, it should have
-  [1] Valid variable name (nested or not nested)
-  [2] Valid number of arguments
-*/
 // Returns nil if there is no error
 func Validate(response *ParsedResponse) error {
 	if response.RawText == "" {
@@ -36,18 +38,32 @@ func Validate(response *ParsedResponse) error {
 	return nil
 }
 
-// TODO: Variable type with no token is valid?
-// For example, "$(user)" has no token in it.
+/*
+Validation logic:
+
+(1) For TextTypeToken, it is always valid as long as raw text is not empty,
+	because the parser does not create text token for empty string at all.
+    Whitespace-only raw text is allowed.
+(2) For VariableTypeToken, it should have
+  [1] Valid variable name, satisfying all three conditions
+	i) One of registered names
+	ii) Enabled
+	iii) If nested, one of nestables
+  [2] Valid number of arguments (TODO)
+*/
 func ValidateToken(token *Token, nested bool) error {
-	// For now, TextTypeToken is always valid.
+	// For now, TextTypeToken is always valid as long as it's not empty.
 	if token.TokenType == TextTokenType {
+		if token.RawText == "" {
+			return EmptyTokenError
+		}
 		return nil
 	}
 
-	// Check if variable name is correct
-	name, err := GetVariableName(token)
-	if err != nil {
-		return err
+	// Check if variable name is not empty
+	name := token.VariableName
+	if name == "" {
+		return VariableNameNotFoundError
 	}
 
 	// Check if variable name is allowed
@@ -55,11 +71,12 @@ func ValidateToken(token *Token, nested bool) error {
 		return VariableNameNotAllowedError
 	}
 
-	// Check if this variable can be nested in another variable
-	if nested && !NameCanBeNested(name) {
+	// If this variable is nested, check for nestability of the name
+	if nested && !IsNestableName(name) {
 		return VariableCanNotBeNestedError
 	}
 
+	// TODO: number of arguments check
 	for _, argument := range token.Arguments {
 		if err := ValidateToken(&argument, true); err != nil {
 			return err
@@ -67,39 +84,24 @@ func ValidateToken(token *Token, nested bool) error {
 	}
 
 	// Check for ending tag
-	if !strings.HasSuffix(token.RawText, VariableCloseTag) {
+	if !strings.HasSuffix(token.RawText, VariableClosingTag) {
 		return VariableHasNoCloseTagError
 	}
 
 	return nil
 }
 
-// TODO: Eventually, it should be one of allowed variable names.
 func IsNameAllowed(name string) bool {
-	return true
+	_, exists := VariableMap[name]
+	return exists
 }
 
-// TODO: Implement this
-func NameCanBeNested(name string) bool {
-	return true
-}
-
-// GetVariableName returns
-func GetVariableName(token *Token) (string, error) {
-	// Variable token with empty body "$()"
-	if len(token.Arguments) == 0 {
-		return "", VariableNameNotFoundError
+func IsNestableName(name string) bool {
+	// Only a few nestable variable names, just iterate through the slice
+	for _, allowedName := range NestableVariableNames {
+		if allowedName == name {
+			return true
+		}
 	}
-	nameArg := token.Arguments[0]
-	// The first argument of the variable token should always be text.
-	// TokenType not being TextTokenType means nested variable in form of $($(a) b)
-	if nameArg.TokenType != TextTokenType {
-		return "", VariableNameNotTextError
-	}
-
-	fields := strings.Fields(nameArg.RawText)
-	if len(fields) == 0 {
-		return "", VariableNameNotFoundError
-	}
-	return fields[0], nil
+	return false
 }

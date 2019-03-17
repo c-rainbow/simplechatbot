@@ -94,7 +94,7 @@ var VariableMap = map[string]Variable{
 		Name:        SubscribeLink,
 		Type:        ChatType,
 		Description: "The channel's subscription link http://twitch.tv/subs/$(channel)",
-		Enabled:     true,
+		Enabled:     false,
 	},
 	// TODO: Find a good domain
 	// TOOD: Make this a reserved keyword?
