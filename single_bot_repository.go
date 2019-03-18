@@ -12,6 +12,7 @@ type SingleBotRepositoryT interface {
 	AddCommand(channel string, command *models.Command) error
 	EditCommand(channel string, command *models.Command) error
 	DeleteCommand(channel string, command *models.Command) error
+	ListCommands(channel string) ([]*models.Command, error)
 }
 
 // Repository for a single bot
@@ -41,7 +42,7 @@ func (repo *SingleBotRepository) GetCommandByChannelAndName(
 func (repo *SingleBotRepository) AddCommand(channel string, command *models.Command) error {
 	err := repo.baseRepo.AddCommand(channel, command)
 	if err != nil {
-		fmt.Println("Error from baseRepo: ", err.Error())
+		fmt.Println("Error from baseRepo, AddCommand: ", err.Error())
 		return err
 	}
 	return nil
@@ -50,7 +51,7 @@ func (repo *SingleBotRepository) AddCommand(channel string, command *models.Comm
 func (repo *SingleBotRepository) EditCommand(channel string, command *models.Command) error {
 	err := repo.baseRepo.EditCommand(channel, command)
 	if err != nil {
-		fmt.Println("Error from baseRepo: ", err.Error())
+		fmt.Println("Error from baseRepo, EditCommand: ", err.Error())
 		return err
 	}
 	return nil
@@ -59,8 +60,18 @@ func (repo *SingleBotRepository) EditCommand(channel string, command *models.Com
 func (repo *SingleBotRepository) DeleteCommand(channel string, command *models.Command) error {
 	err := repo.baseRepo.DeleteCommand(channel, command)
 	if err != nil {
-		fmt.Println("Error from baseRepo: ", err.Error())
+		fmt.Println("Error from baseRepo, DeleteCommand: ", err.Error())
 		return err
 	}
 	return nil
+}
+
+// TODO: Eventually, point this to a web page
+func (repo *SingleBotRepository) ListCommands(channel string) ([]*models.Command, error) {
+	commands, err := repo.baseRepo.ListCommands(channel)
+	if err != nil {
+		fmt.Println("Error from baseRepo, ListCommands: ", err.Error())
+		return nil, err
+	}
+	return commands, nil
 }

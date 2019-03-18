@@ -38,6 +38,7 @@ type BaseRepositoryT interface {
 	AddCommand(channel string, commandToAdd *models.Command) error
 	EditCommand(channel string, commandToAdd *models.Command) error
 	DeleteCommand(channel string, commandToAdd *models.Command) error
+	ListCommands(channel string) ([]*models.Command, error)
 }
 
 type BaseRepository struct {
@@ -224,4 +225,20 @@ func (repo *BaseRepository) getChannelAndCommandExists(
 	chanInfo := repo.channelMap[channel]
 	_, exists := chanInfo.Commands[command.Name]
 	return chanInfo, exists
+}
+
+func (repo *BaseRepository) ListCommands(channel string) ([]*models.Command, error) {
+	// TODO: Which bot's commands should be returned?
+	commandMap := repo.channelMap[channel].Commands
+	commands := []models.Command{}
+	for _, v := range commandMap {
+		fmt.Println("Baserepo command name: ", v.Name)
+		commands = append(commands, v)
+		fmt.Println("Command so far: ", commands)
+	}
+	commandPointers := make([]*models.Command, len(commands))
+	for i, _ := range commands {
+		commandPointers[i] = &commands[i]
+	}
+	return commandPointers, nil
 }

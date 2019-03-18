@@ -45,7 +45,7 @@ func ParseCommand(
 
 	parsedResponse := parser.ParseResponse(response)
 	responseMap := make(map[string]parser.ParsedResponse)
-	responseMap["DEFAULT"] = *parsedResponse // default response has empty str key.
+	responseMap[DefaultResponseKey] = *parsedResponse // default response has empty str key.
 	fmt.Println("responseMap: ", responseMap)
 
 	// Parse command and response
