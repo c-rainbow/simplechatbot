@@ -2,8 +2,10 @@ package simplechatbot
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
+	"github.com/c-rainbow/simplechatbot/commands"
 	models "github.com/c-rainbow/simplechatbot/models"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
@@ -26,16 +28,32 @@ func NewChatMessageHandler(
 	return &ChatMessageHandler{botInfo: botInfo, repo: repo, ircClient: ircClient, chatters: make(map[string]bool)}
 }
 
-func (handler *ChatMessageHandler) OnNewMessage(channel string, sender twitch_irc.User, message twitch_irc.Message) {
+func (handler *ChatMessageHandler) OnNewMessage(
+	channel string, sender twitch_irc.User, message twitch_irc.Message) {
 	fmt.Println("Chat received: ", message.Raw)
 	commandName := getCommandName(message.Text)
 	commandName = strings.ToLower(commandName)
 
-	displayName := message.Tags["display-name"]
-	if displayName == "" {
-		displayName = sender.DisplayName
+	// One of reserved command names
+
+	if commandName == "!addcom" {
+		// Get
+		parsedCommand, err := commands.ParseCommand(handler.botInfo.TwitchID, message.Text, channel, &sender, &message)
+		if err != nil {
+			log.Println("!addcom err: ", err.Error())
+			return
+		}
+		handler.repo.AddCommand(channel, parsedCommand)
+
+	} else if commandName == "!editcom" {
+
+	} else if commandName == "!delcom" {
+
 	}
 
+	// Check if command with the same name exists
+	command := handler.repo.GetCommandByChannelAndName(channel, commandName)
+	displayName := sender.DisplayName
 	toSay := ""
 
 	if commandName == "hello" || commandName == "hi" {
@@ -58,7 +76,6 @@ func (handler *ChatMessageHandler) OnNewMessage(channel string, sender twitch_ir
 	}
 
 	// TODO: permission check, spam check, etc.
-	command := handler.repo.GetCommandByChannelAndName(channel, commandName)
 	if command != nil { //
 		// response := command.Response
 		// TODO: Format response and send
@@ -68,6 +85,7 @@ func (handler *ChatMessageHandler) OnNewMessage(channel string, sender twitch_ir
 
 // Gets command name from the full chat text
 func getCommandName(text string) string {
+
 	index := strings.Index(text, " ")
 	// If there is no space in the chat text, then the chat itself is the command
 	if index == -1 {

@@ -128,7 +128,7 @@ func parseVariable(runes []rune, fromIndex int) (Token, int) {
 	// This increment may not need to be surrounded by if-statement, because
 	// the only case when runes[currentIndex] is not end tag is end of string.
 	if isVariableEndingTag(runes, currentIndex) {
-		currentIndex++
+		currentIndex += len(endVarRunes)
 	}
 
 	token.RawText = string(runes[fromIndex:currentIndex])

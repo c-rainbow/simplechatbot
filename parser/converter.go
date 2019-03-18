@@ -28,8 +28,9 @@ func ConvertResponse(response *ParsedResponse, channel string, sender *twitch_ir
 			switch variableType {
 			case ChatType:
 				converted, err = ConvertChatVariables(&token, channel, sender, message)
-
+				// "break" means break from the loop
 			case StreamAPIType:
+				// Go doesn't automatically move to the next case unless the case is marked as "fallthrough"
 				fallthrough
 			case UserAPIType:
 				fallthrough
@@ -60,7 +61,7 @@ func ConvertChatVariables(token *Token, channel string, sender *twitch_irc.User,
 		return "", NotVariableTypeError
 	}
 
-	// Unfortunately, this giant switch seems to be the only way
+	// Unfortunately, this giant switch-statement seems to be the only way
 	switch token.VariableName {
 	case User:
 		return sender.DisplayName, nil
