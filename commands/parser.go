@@ -2,6 +2,7 @@ package commands
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -44,7 +45,8 @@ func ParseCommand(
 
 	parsedResponse := parser.ParseResponse(response)
 	responseMap := make(map[string]parser.ParsedResponse)
-	responseMap[""] = *parsedResponse // default response has empty str key.
+	responseMap["DEFAULT"] = *parsedResponse // default response has empty str key.
+	fmt.Println("responseMap: ", responseMap)
 
 	// Parse command and response
 	command := models.Command{
@@ -62,14 +64,22 @@ func ParseCommand(
 func ParseNameAndResponseFromChat(text string) (string, string, error) {
 	// TODO: This does not handle consecutive whitespaces in response text.
 	fields := strings.Fields(text)
+
 	// This method is called only when !addcom/!editcom/!delcom is called from chat.
-	if len(fields) < 3 {
+	// Minimum length 3 is correct (!*com [commandName] [response]) for addcom/editcom
+	// For delcom, length should be 2
+	if len(fields) < 2 {
 		return "", "", NotEnoughArgumentsError
 	}
-	name := fields[1]
-	response := strings.Join(fields[2:], " ")
 
-	return name, response, nil
+	response := ""
+	if len(fields) < 3 {
+		return fields[1], "", nil
+	} else {
+		response = strings.Join(fields[2:], " ")
+	}
+
+	return fields[1], response, nil
 }
 
 func UserHasPermission(channel string, commandName string, updateType CommandUpdateType,

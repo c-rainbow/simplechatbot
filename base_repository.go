@@ -36,6 +36,8 @@ type BaseRepositoryT interface {
 	CreateNewBot(botInfo *models.Bot) error
 	AddBotToChannel(botInfo *models.Bot, channelToAdd *models.Channel) error
 	AddCommand(channel string, commandToAdd *models.Command) error
+	EditCommand(channel string, commandToAdd *models.Command) error
+	DeleteCommand(channel string, commandToAdd *models.Command) error
 }
 
 type BaseRepository struct {
@@ -208,6 +210,9 @@ func (repo *BaseRepository) DeleteCommand(channel string, commandToDelete *model
 		return CommandNameNotFoundError
 	}
 	delete(chanInfo.Commands, commandToDelete.Name)
+	if _, has := chanInfo.Commands[""]; has {
+		delete(chanInfo.Commands, "")
+	}
 
 	// TODO: Handle when DB update failed, then we have inconsistent state in channelMap
 	return repo.UpdateChannel(chanInfo)

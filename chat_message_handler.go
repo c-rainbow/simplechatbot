@@ -7,7 +7,12 @@ import (
 
 	"github.com/c-rainbow/simplechatbot/commands"
 	models "github.com/c-rainbow/simplechatbot/models"
+	"github.com/c-rainbow/simplechatbot/parser"
 	twitch_irc "github.com/gempir/go-twitch-irc"
+)
+
+var (
+	ReservedCommands = []string{"!addcom", "!editcom", "!delcom"}
 )
 
 type ChatMessageHandlerT interface {
@@ -35,41 +40,58 @@ func (handler *ChatMessageHandler) OnNewMessage(
 	commandName = strings.ToLower(commandName)
 
 	// One of reserved command names
-
 	if commandName == "!addcom" {
-		// Get
 		parsedCommand, err := commands.ParseCommand(handler.botInfo.TwitchID, message.Text, channel, &sender, &message)
 		if err != nil {
 			log.Println("!addcom err: ", err.Error())
 			return
 		}
 		handler.repo.AddCommand(channel, parsedCommand)
-
 	} else if commandName == "!editcom" {
-
+		parsedCommand, err := commands.ParseCommand(handler.botInfo.TwitchID, message.Text, channel, &sender, &message)
+		if err != nil {
+			log.Println("!editcom err: ", err.Error())
+			return
+		}
+		handler.repo.EditCommand(channel, parsedCommand)
 	} else if commandName == "!delcom" {
-
+		parsedCommand, err := commands.ParseCommand(handler.botInfo.TwitchID, message.Text, channel, &sender, &message)
+		if err != nil {
+			log.Println("!delcom err: ", err.Error())
+			return
+		}
+		handler.repo.DeleteCommand(channel, parsedCommand)
 	}
 
 	// Check if command with the same name exists
 	command := handler.repo.GetCommandByChannelAndName(channel, commandName)
-	displayName := sender.DisplayName
+	// displayName := sender.DisplayName
 	toSay := ""
 
-	if commandName == "hello" || commandName == "hi" {
+	if command != nil {
+		response := command.Responses["DEFAULT"]
+		converted, err := parser.ConvertResponse(&response, channel, &sender, &message)
+		if err != nil {
+			fmt.Println("ERror while converting response: ", err.Error())
+			return
+		}
+		toSay = converted
+	}
+
+	/*if commandName == "hello" || commandName == "hi" {
 		toSay = "Hi " + displayName
 	} else if commandName == "안녕하세요" && sender.Username != "c_rainbow" {
 		toSay = displayName + " 님도 안녕하세요"
 	} else if commandName == "!quit" && sender.Username == "c_rainbow" {
 		handler.ircClient.Depart(channel)
 		handler.ircClient.Disconnect()
-	}
+	}*/
 
 	// Check for new chatter
-	if _, has := handler.chatters[displayName]; !has {
+	/*if _, has := handler.chatters[displayName]; !has {
 		handler.chatters[displayName] = true
 		toSay = displayName + " 님 어서오세요 환영합니다"
-	}
+	}*/
 
 	if toSay != "" {
 		handler.ircClient.Say(channel, toSay)

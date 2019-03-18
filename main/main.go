@@ -9,6 +9,7 @@ import (
 	"github.com/c-rainbow/simplechatbot"
 	"github.com/c-rainbow/simplechatbot/db/localrun"
 	"github.com/c-rainbow/simplechatbot/models"
+	"github.com/c-rainbow/simplechatbot/parser"
 )
 
 // Clean and re-populate DynamoDB tables with default bot and channel data
@@ -65,8 +66,9 @@ func main() {
 func mainAddCommand() {
 	baseRepo := simplechatbot.NewBaseRepository()
 
-	responseMap := make(map[string]string)
-	responseMap[""] = "Hello $(user)"
+	responseMap := make(map[string]parser.ParsedResponse)
+	response := parser.ParseResponse("Hello $(user)")
+	responseMap[""] = *response
 	channelName := localrun.DefaultChannelUsername
 	helloCommand := models.Command{
 		Name:           "hello",

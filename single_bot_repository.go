@@ -10,6 +10,8 @@ type SingleBotRepositoryT interface {
 	GetAllChannels() []*models.Channel
 	GetCommandByChannelAndName(channel string, commandName string) *models.Command
 	AddCommand(channel string, command *models.Command) error
+	EditCommand(channel string, command *models.Command) error
+	DeleteCommand(channel string, command *models.Command) error
 }
 
 // Repository for a single bot
@@ -38,8 +40,26 @@ func (repo *SingleBotRepository) GetCommandByChannelAndName(
 
 func (repo *SingleBotRepository) AddCommand(channel string, command *models.Command) error {
 	err := repo.baseRepo.AddCommand(channel, command)
-	fmt.Println("Error from baseRepo: ", err.Error())
 	if err != nil {
+		fmt.Println("Error from baseRepo: ", err.Error())
+		return err
+	}
+	return nil
+}
+
+func (repo *SingleBotRepository) EditCommand(channel string, command *models.Command) error {
+	err := repo.baseRepo.EditCommand(channel, command)
+	if err != nil {
+		fmt.Println("Error from baseRepo: ", err.Error())
+		return err
+	}
+	return nil
+}
+
+func (repo *SingleBotRepository) DeleteCommand(channel string, command *models.Command) error {
+	err := repo.baseRepo.DeleteCommand(channel, command)
+	if err != nil {
+		fmt.Println("Error from baseRepo: ", err.Error())
 		return err
 	}
 	return nil
