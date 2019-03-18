@@ -2,6 +2,10 @@
 
 package models
 
+import (
+	parser "github.com/c-rainbow/simplechatbot/parser"
+)
+
 // User levels for command.
 // Externally, only Everyone, Moderator, Stremer will be available.
 const (
@@ -63,8 +67,8 @@ type Command struct {
 	ChannelID int64
 	// Command name
 	Name string
-	// Bot's Response, in parametrized string
-	Responses map[string]string `dynamo:",set"`
+	// Bot's Response, in parsed form
+	Responses map[string]parser.ParsedResponse // `dynamo:",set"`
 	// Cooldown in seconds
 	CooldownSecond int
 	// True if enabled

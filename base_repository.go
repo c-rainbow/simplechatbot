@@ -35,6 +35,7 @@ type BaseRepositoryT interface {
 	GetCommand(botID int64, channel string, commandName string) *models.Command
 	CreateNewBot(botInfo *models.Bot) error
 	AddBotToChannel(botInfo *models.Bot, channelToAdd *models.Channel) error
+	AddCommand(channel string, commandToAdd *models.Command) error
 }
 
 type BaseRepository struct {

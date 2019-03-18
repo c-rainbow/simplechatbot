@@ -62,6 +62,26 @@ func main() {
 
 }
 
+func mainAddCommand() {
+	baseRepo := simplechatbot.NewBaseRepository()
+
+	responseMap := make(map[string]string)
+	responseMap[""] = "Hello $(user)"
+	channelName := localrun.DefaultChannelUsername
+	helloCommand := models.Command{
+		Name:           "hello",
+		BotID:          localrun.DefaultBotTwitchID,
+		ChannelID:      localrun.DefaultChannelTwitchID,
+		CooldownSecond: 5,
+		Responses:      responseMap,
+		Enabled:        true,
+	}
+	err := baseRepo.AddCommand(channelName, &helloCommand)
+	if err != nil {
+		fmt.Println("Errorrrrr: ", err.Error())
+	}
+}
+
 func mainDelete() {
 	baseRepo := simplechatbot.NewBaseRepository()
 	command := models.Command{
