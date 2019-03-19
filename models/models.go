@@ -67,6 +67,8 @@ type Command struct {
 	ChannelID int64
 	// Command name
 	Name string
+	// Chat plugin type: response, add_command, edit_command, delete_command, etc
+	PluginType string
 	// Bot's Response, in parsed form
 	Responses map[string]parser.ParsedResponse // `dynamo:",set"`
 	// Cooldown in seconds

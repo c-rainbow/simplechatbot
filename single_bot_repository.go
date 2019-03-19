@@ -7,6 +7,7 @@ import (
 )
 
 type SingleBotRepositoryT interface {
+	GetBotInfo() *models.Bot
 	GetAllChannels() []*models.Channel
 	GetCommandByChannelAndName(channel string, commandName string) *models.Command
 	AddCommand(channel string, command *models.Command) error
@@ -25,6 +26,10 @@ var _ SingleBotRepositoryT = (*SingleBotRepository)(nil)
 
 func NewSingleBotRepository(botInfo *models.Bot, baseRepo BaseRepositoryT) *SingleBotRepository {
 	return &SingleBotRepository{botInfo: botInfo, baseRepo: baseRepo}
+}
+
+func (repo *SingleBotRepository) GetBotInfo() *models.Bot {
+	return repo.botInfo
 }
 
 // GetAllChannels returns all channels for this bot.

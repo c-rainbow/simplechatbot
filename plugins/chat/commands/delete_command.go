@@ -1,32 +1,32 @@
-package plugins
+package commandplugins
 
 import (
-	"errors"
 	"log"
 
-	"github.com/c-rainbow/simplechatbot/commands"
-
 	bot "github.com/c-rainbow/simplechatbot"
+	commands "github.com/c-rainbow/simplechatbot/commands"
 	models "github.com/c-rainbow/simplechatbot/models"
 	parser "github.com/c-rainbow/simplechatbot/parser"
+	plugins "github.com/c-rainbow/simplechatbot/plugins"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
 
-var (
-	CommandNotFoundError   = errors.New("Command with the name is not found")
-	NoPermissionError      = errors.New("User has no permission to call this command")
-	NoDefaultResponseError = errors.New("Default response is not found for the command")
+const (
+	DeleteCommandPluginType = "DeleteCommandPluginType"
 )
 
-// Plugin that responds to user-defined chat commands.
-type CommandResponsePlugin struct {
+var (
+	DeleteFailureKey = "DeleteFailureKey"
+)
+
+type DeleteCommandPlugin struct {
 	ircClient *bot.TwitchClient
 	repo      bot.SingleBotRepositoryT
 }
 
-var _ ChatPlugin = (*CommandResponsePlugin)(nil)
+var _ ChatCommandPlugin = (*DeleteCommandPlugin)(nil)
 
-func (plugin *CommandResponsePlugin) Run(
+func (plugin *DeleteCommandPlugin) Run(
 	commandName string, channel string, sender *twitch_irc.User, message *twitch_irc.Message) error {
 	// Read-action-print loop
 	command, err := plugin.read(commandName, channel, sender, message)
@@ -38,12 +38,17 @@ func (plugin *CommandResponsePlugin) Run(
 	return nil
 }
 
-func (plugin *CommandResponsePlugin) read(commandName string, channel string, sender *twitch_irc.User,
+func (plugin *DeleteCommandPlugin) read(commandName string, channel string, sender *twitch_irc.User,
 	message *twitch_irc.Message) (*models.Command, error) {
 	// Get command model from the repository
 	command := plugin.repo.GetCommandByChannelAndName(channel, commandName)
 	if command == nil {
 		return nil, CommandNotFoundError
+	}
+
+	// Make sure that the plugin type is DeleteCommandPluginType
+	if command.PluginType != DeleteCommandPluginType {
+		return nil, plugins.IncorrectPluginTypeError
 	}
 
 	// Check permission
@@ -64,7 +69,7 @@ func (plugin *CommandResponsePlugin) read(commandName string, channel string, se
 //
 // Note that CommandNotFoundError is also treated as an error, because in usual workflow,
 // this plugin is only called after chat message handler checks for command name.
-func (plugin *CommandResponsePlugin) action(
+func (plugin *DeleteCommandPlugin) action(
 	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message,
 	err error) (string, error) {
 	// Check what error is returned from Read()
@@ -73,16 +78,30 @@ func (plugin *CommandResponsePlugin) action(
 		return err.Error(), nil
 	}
 
-	// Get default response
-	response, exists := command.Responses[commands.DefaultResponseKey]
+	// Parse command response
+	botID := plugin.repo.GetBotInfo().TwitchID
+	parsedCommand, err := commands.ParseCommand(botID, message.Text, channel, sender, message)
+	if err != nil {
+		return "Failed to parse command", err
+	}
+	err = plugin.repo.DeleteCommand(channel, parsedCommand)
+	if err != nil {
+		// TODO: pull failure message for
+		// failureResponse, exists := command.Responses[DeleteFailureKey]
+		return "Failed to update command in database", err
+	}
+
+	// TODO: Add new variable, for the name of command just added
+	// Get default response for successful add.
+	successResponse, exists := command.Responses[commands.DefaultResponseKey]
 	// This shouldn't happen in normal case. Default response always exists
 	// if command is added in a correct way.
 	if !exists {
-		return "No response is found with the command", NoDefaultResponseError
+		return "No success response is found with the command", nil
 	}
 
 	// TODO: Support for API & function type variables
-	converted, err := parser.ConvertResponse(&response, channel, sender, message)
+	converted, err := parser.ConvertResponse(&successResponse, channel, sender, message)
 	// This error usually happens when disabled/unsupported variable name is used.
 	// It is usually already checked when command was added, but is double-checked here just in case.
 	if err != nil {
@@ -92,7 +111,7 @@ func (plugin *CommandResponsePlugin) action(
 	return converted, nil
 }
 
-func (plugin *CommandResponsePlugin) output(channel string, toSay string, err error) error {
+func (plugin *DeleteCommandPlugin) output(channel string, toSay string, err error) error {
 	// Even with error, the plugin might respond that "There is unknown error"
 	if toSay != "" {
 		plugin.ircClient.Say(channel, toSay)
@@ -108,7 +127,7 @@ func (plugin *CommandResponsePlugin) output(channel string, toSay string, err er
 	return nil
 }
 
-func (plugin *CommandResponsePlugin) userHasPermission(
+func (plugin *DeleteCommandPlugin) userHasPermission(
 	channel string, commandName string, sender *twitch_irc.User, message *twitch_irc.Message) (bool, error) {
 	/* TODO:
 	(1) Update function signature to accept user level (or is included in tags?)
