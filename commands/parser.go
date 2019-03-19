@@ -45,7 +45,7 @@ func ParseCommand(
 
 	parsedResponse := parser.ParseResponse(response)
 	responseMap := make(map[string]parser.ParsedResponse)
-	responseMap[DefaultResponseKey] = *parsedResponse // default response has empty str key.
+	responseMap[DefaultResponseKey] = *parsedResponse
 	fmt.Println("responseMap: ", responseMap)
 
 	// Parse command and response
@@ -84,11 +84,12 @@ func ParseNameAndResponseFromChat(text string) (string, string, error) {
 
 func UserHasPermission(channel string, commandName string, updateType CommandUpdateType,
 	sender *twitch_irc.User, message *twitch_irc.Message) (bool, error) {
-	isMod := message.Tags["mod"]
+	/*isMod := message.Tags["mod"]
 	isBroadcaster := sender.Username == channel
 	// TODO: How to check if user is staff?
 	if isMod == "1" || isBroadcaster {
 		return true, nil
 	}
-	return false, nil
+	return false, nil*/
+	return true, nil
 }
