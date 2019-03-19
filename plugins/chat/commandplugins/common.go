@@ -11,53 +11,38 @@ import (
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
 
-const (
-	DeleteCommandPluginType = "DeleteCommandPluginType"
-)
+// Common read function by add/edit/delete/respond commands.
+// They are all identical except plugin type check part and actionFunction parameter
+func CommonRun(repo bot.SingleBotRepositoryT, ircClient *bot.TwitchClient, expectedPluginType string,
+	actionFunction func(string, *models.Command) error, commandName string, channel string,
+	sender *twitch_irc.User, message *twitch_irc.Message) error {
 
-var (
-	DeleteFailureKey = "DeleteFailureKey"
-)
-
-type DeleteCommandPlugin struct {
-	ircClient *bot.TwitchClient
-	repo      bot.SingleBotRepositoryT
-}
-
-var _ ChatCommandPlugin = (*DeleteCommandPlugin)(nil)
-
-func (plugin *DeleteCommandPlugin) Run(
-	commandName string, channel string, sender *twitch_irc.User, message *twitch_irc.Message) error {
 	// Read-action-print loop
-	command, err := plugin.read(commandName, channel, sender, message)
-	toSay, err := plugin.action(command, channel, sender, message, err)
-	err = plugin.output(channel, toSay, err)
-	if err != nil {
-		return err
-	}
-	return nil
+	command, err := CommonRead(repo, commandName, channel, expectedPluginType, sender, message)
+	toSay, err := CommonAction(repo.GetBotInfo(), actionFunction, command, channel, sender, message, err)
+	return CommonOutput(ircClient, channel, toSay, err)
 }
 
-func (plugin *DeleteCommandPlugin) read(commandName string, channel string, sender *twitch_irc.User,
-	message *twitch_irc.Message) (*models.Command, error) {
+// Common read function by add/edit/delete/respond commands.
+// They are all identical except plugin type check part
+func CommonRead(repo bot.SingleBotRepositoryT, commandName string, channel string, expectedPluginType string,
+	sender *twitch_irc.User, message *twitch_irc.Message) (*models.Command, error) {
 	// Get command model from the repository
-	command := plugin.repo.GetCommandByChannelAndName(channel, commandName)
+	command := repo.GetCommandByChannelAndName(channel, commandName)
 	if command == nil {
 		return nil, CommandNotFoundError
 	}
 
-	// Make sure that the plugin type is DeleteCommandPluginType
-	if command.PluginType != DeleteCommandPluginType {
+	// Make sure that the plugin type is correct. This check was added for validation purposes,
+	// because mismatch means data inconsistency between repository and chat message handler.
+	if command.PluginType != expectedPluginType {
 		return nil, plugins.IncorrectPluginTypeError
 	}
 
-	// Check permission
-	allowed, err := plugin.userHasPermission(channel, commandName, sender, message)
-	if err != nil {
-		return nil, err
-	}
-	if !allowed {
-		return nil, NoPermissionError
+	// Check permission. Still returns command object because permission error is user's misbehavior, and
+	// not a plugin error. TODO: I am not 100% sure if "no permission" should be an error or return value.
+	if err := UserHasPermission(channel, command, sender, message); err != nil {
+		return command, err
 	}
 
 	return command, nil
@@ -69,9 +54,9 @@ func (plugin *DeleteCommandPlugin) read(commandName string, channel string, send
 //
 // Note that CommandNotFoundError is also treated as an error, because in usual workflow,
 // this plugin is only called after chat message handler checks for command name.
-func (plugin *DeleteCommandPlugin) action(
-	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message,
-	err error) (string, error) {
+func CommonAction(
+	botInfo *models.Bot, actionFunction func(string, *models.Command) error, command *models.Command,
+	channel string, sender *twitch_irc.User, message *twitch_irc.Message, err error) (string, error) {
 	// Check what error is returned from Read()
 	if err != nil {
 		// TODO: Convert the error to public display message
@@ -79,16 +64,16 @@ func (plugin *DeleteCommandPlugin) action(
 	}
 
 	// Parse command response
-	botID := plugin.repo.GetBotInfo().TwitchID
-	parsedCommand, err := commands.ParseCommand(botID, message.Text, channel, sender, message)
+	parsedCommand, err := commands.ParseCommand(botInfo.TwitchID, message.Text, channel, sender, message)
 	if err != nil {
 		return "Failed to parse command", err
 	}
-	err = plugin.repo.DeleteCommand(channel, parsedCommand)
+	// actionFunction is One of AddCommand, EditCommand, DeleteCommand
+	err = actionFunction(channel, parsedCommand)
 	if err != nil {
 		// TODO: pull failure message for
-		// failureResponse, exists := command.Responses[DeleteFailureKey]
-		return "Failed to update command in database", err
+		// failureResponse, exists := command.Responses[AddFailureKey]
+		return "Failed to do actionFunction", err
 	}
 
 	// TODO: Add new variable, for the name of command just added
@@ -111,10 +96,10 @@ func (plugin *DeleteCommandPlugin) action(
 	return converted, nil
 }
 
-func (plugin *DeleteCommandPlugin) output(channel string, toSay string, err error) error {
+func CommonOutput(ircClient *bot.TwitchClient, channel string, toSay string, err error) error {
 	// Even with error, the plugin might respond that "There is unknown error"
 	if toSay != "" {
-		plugin.ircClient.Say(channel, toSay)
+		ircClient.Say(channel, toSay)
 	}
 	if err != nil {
 		// Don't print anything because this is abnormal case.
@@ -127,8 +112,9 @@ func (plugin *DeleteCommandPlugin) output(channel string, toSay string, err erro
 	return nil
 }
 
-func (plugin *DeleteCommandPlugin) userHasPermission(
-	channel string, commandName string, sender *twitch_irc.User, message *twitch_irc.Message) (bool, error) {
+// TODO: Why does this need boolean value?
+func UserHasPermission(channel string, command *models.Command, sender *twitch_irc.User,
+	message *twitch_irc.Message) error {
 	/* TODO:
 	(1) Update function signature to accept user level (or is included in tags?)
 	(2) If permission is everyone, return (true, nil)
@@ -144,7 +130,7 @@ func (plugin *DeleteCommandPlugin) userHasPermission(
 	isBroadcaster := sender.Username == channel
 	// TODO: How to check if user is staff?
 	if isMod == "1" || isBroadcaster {
-		return true, nil
+		return nil
 	}*/
-	return true, nil
+	return nil
 }
