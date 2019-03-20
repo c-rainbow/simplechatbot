@@ -4,8 +4,7 @@ import (
 	"errors"
 
 	"github.com/c-rainbow/simplechatbot/client"
-	"github.com/c-rainbow/simplechatbot/commands"
-	chat_plugins "github.com/c-rainbow/simplechatbot/plugins/chat"
+	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
 	"github.com/c-rainbow/simplechatbot/repository"
 
 	models "github.com/c-rainbow/simplechatbot/models"
@@ -19,7 +18,6 @@ const (
 
 var (
 	CommandNotFoundError   = errors.New("Command with the name is not found")
-	NoPermissionError      = errors.New("User has no permission to call this command")
 	NoDefaultResponseError = errors.New("Default response is not found for the command")
 )
 
@@ -29,7 +27,12 @@ type CommandResponsePlugin struct {
 	repo      repository.SingleBotRepositoryT
 }
 
-var _ chat_plugins.ChatCommandPlugin = (*CommandResponsePlugin)(nil)
+var _ chatplugins.ChatCommandPlugin = (*CommandResponsePlugin)(nil)
+
+func NewCommandResponsePlugin(
+	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPlugin {
+	return &CommandResponsePlugin{ircClient: ircClient, repo: repo}
+}
 
 func (plugin *CommandResponsePlugin) Run(
 	commandName string, channel string, sender *twitch_irc.User, message *twitch_irc.Message) error {
@@ -59,7 +62,7 @@ func (plugin *CommandResponsePlugin) action(
 	}
 
 	// Get default response
-	response, exists := command.Responses[commands.DefaultResponseKey]
+	response, exists := command.Responses[chatplugins.DefaultResponseKey]
 	// This shouldn't happen in normal case. Default response always exists
 	// if command is added in a correct way.
 	if !exists {

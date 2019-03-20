@@ -2,7 +2,7 @@ package commandplugins
 
 import (
 	"github.com/c-rainbow/simplechatbot/client"
-	chat_plugins "github.com/c-rainbow/simplechatbot/plugins/chat"
+	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
 	"github.com/c-rainbow/simplechatbot/repository"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
@@ -16,10 +16,10 @@ type AddCommandPlugin struct {
 	repo      repository.SingleBotRepositoryT
 }
 
-var _ chat_plugins.ChatCommandPlugin = (*AddCommandPlugin)(nil)
+var _ chatplugins.ChatCommandPlugin = (*AddCommandPlugin)(nil)
 
 func NewAddCommandPlugin(
-	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chat_plugins.ChatCommandPlugin {
+	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPlugin {
 	return &AddCommandPlugin{ircClient: ircClient, repo: repo}
 }
 

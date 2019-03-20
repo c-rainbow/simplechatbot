@@ -6,11 +6,10 @@ import (
 	"strings"
 
 	client "github.com/c-rainbow/simplechatbot/client"
-	commands "github.com/c-rainbow/simplechatbot/commands"
 	models "github.com/c-rainbow/simplechatbot/models"
-	parser "github.com/c-rainbow/simplechatbot/parser"
 	repository "github.com/c-rainbow/simplechatbot/repository"
 
+	chat_plugins "github.com/c-rainbow/simplechatbot/plugins/chat"
 	commandplugins "github.com/c-rainbow/simplechatbot/plugins/chat/commandplugins"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
@@ -38,86 +37,55 @@ func (handler *ChatMessageHandler) OnNewMessage(
 	fmt.Println("Chat received: ", message.Raw)
 	commandName := getCommandName(message.Text)
 	commandName = strings.ToLower(commandName)
-	toSay := ""
 
-	// TODO: Which bot should react to this?
-	if commands.ReservedCommands[commandName] {
-		var err error
-		if commandName == commands.ListCommandsKey || commandName == commands.ListCommandsKeyKor {
-			plugin := commandplugins.NewListCommandsPlugin(handler.ircClient, handler.repo)
-			err = plugin.Run(commandName, channel, &sender, &message)
-		} else {
+	// TODO: Delete this hardcoded quit message.
+	if commandName == "!quit" && sender.Username == "c_rainbow" {
+		handler.ircClient.Depart(channel)
+		handler.ircClient.Disconnect()
+	}
 
-			parsedCommand, err := commands.ParseCommand(handler.botInfo.TwitchID, message.Text, channel, &sender, &message)
-			if err != nil {
-				log.Println("ParseCommand err: ", err.Error())
-				return
-			}
-			switch commandName {
-			case commands.AddCommandKey, commands.AddCommandKeyKor:
-				// commandplugins.AddCommand{}
-				// err = handler.repo.AddCommand(channel, parsedCommand)
-				plugin := commandplugins.NewAddCommandPlugin(handler.ircClient, handler.repo)
-				err = plugin.Run(commandName, channel, &sender, &message)
-			case commands.EditCommandKey, commands.EditCommandKeyKor:
-				err = handler.repo.EditCommand(channel, parsedCommand)
-			case commands.DeleteCommandKey, commands.DeleteCommandKeyKor:
-				err = handler.repo.DeleteCommand(channel, parsedCommand)
+	// Check if command with the same name exists
+	// The repository (of type SingleBotRepositoryT) ensures that the correct bot responds to the command.
+	// If this line is executed in a different bot, nil would be returned.
+	command := handler.repo.GetCommandByChannelAndName(channel, commandName)
+	if command == nil { // Chat is not a bot command.
+		return
+	}
 
-			default:
-				log.Println("Cannot find commandName", commandName)
-				return
-			}
-		}
+	var plugin chat_plugins.ChatCommandPlugin
+	// TODO: Eventually, get plugin from a factory or manager
+	switch command.PluginType {
+	// Simply responding to command, no other action
+	case commandplugins.CommandResponsePluginType:
+		plugin = commandplugins.NewCommandResponsePlugin(handler.ircClient, handler.repo)
+	// Add command, like !addcom
+	case commandplugins.AddCommandPluginType:
+		plugin = commandplugins.NewAddCommandPlugin(handler.ircClient, handler.repo)
+	// Edit command, like !editcom
+	case commandplugins.EditCommandPluginType:
+		plugin = commandplugins.NewEditCommandPlugin(handler.ircClient, handler.repo)
+	// Delete command, like !delcom
+	case commandplugins.DeleteCommandPluginType:
+		plugin = commandplugins.NewDeleteCommandPlugin(handler.ircClient, handler.repo)
+	// List commands, like !commands
+	case commandplugins.ListCommandsPluginType:
+		plugin = commandplugins.NewListCommandsPlugin(handler.ircClient, handler.repo)
+	default:
+		log.Println("Unknown plugin type '", command.PluginType, "'")
+	}
+
+	if plugin != nil {
+		err := plugin.Run(commandName, channel, &sender, &message)
 		if err != nil {
-			log.Println("Failed to process command update: ", err.Error())
-			return
+			log.Println("Error while running plugin for '", commandName, "': ", err.Error())
 		}
-	} else {
-		// Check if command with the same name exists
-		command := handler.repo.GetCommandByChannelAndName(channel, commandName)
-		// displayName := sender.DisplayName
-
-		if command != nil {
-			// TODO: diverse response cases
-			response := command.Responses[commands.DefaultResponseKey]
-			converted, err := parser.ConvertResponse(&response, channel, &sender, &message)
-			if err != nil {
-				fmt.Println("ERror while converting response: ", err.Error())
-				return
-			}
-			toSay = converted
-		}
-
-		/*if commandName == "hello" || commandName == "hi" {
-			toSay = "Hi " + displayName
-		} else if commandName == "안녕하세요" && sender.Username != "c_rainbow" {
-			toSay = displayName + " 님도 안녕하세요"
-		} else */
-		if commandName == "!quit" && sender.Username == "c_rainbow" {
-			handler.ircClient.Depart(channel)
-			handler.ircClient.Disconnect()
-		}
-
-		// Check for new chatter
-		/*if _, has := handler.chatters[displayName]; !has {
-			handler.chatters[displayName] = true
-			toSay = displayName + " 님 어서오세요 환영합니다"
-		}*/
 	}
 
-	if toSay != "" {
-		handler.ircClient.Say(channel, toSay)
-	}
 }
 
 // Gets command name from the full chat text
 func getCommandName(text string) string {
-	// TODO: Is there always to heading space?
-	index := strings.Index(text, " ")
-	// If there is no space in the chat text, then the chat itself is the command
-	if index == -1 {
-		return text
-	}
-	return text[:index]
+	// strings.Fields deals with heading/trailing/non-space whitespaces.
+	fields := strings.Fields(text)
+	return fields[0]
 }

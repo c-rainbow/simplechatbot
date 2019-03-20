@@ -1,4 +1,4 @@
-package commands
+package commandplugins
 
 import (
 	"errors"
@@ -8,19 +8,11 @@ import (
 
 	models "github.com/c-rainbow/simplechatbot/models"
 	parser "github.com/c-rainbow/simplechatbot/parser"
+	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
 
-type CommandUpdateType int
-
-const (
-	AddType    CommandUpdateType = 1
-	EditType   CommandUpdateType = 2
-	DeleteType CommandUpdateType = 3
-)
-
 var (
-	NoPermissionError       = errors.New("User has no permission")
 	NotEnoughArgumentsError = errors.New("Not enough arguments")
 )
 
@@ -32,20 +24,12 @@ func ParseCommand(
 	if err != nil {
 		return nil, err
 	}
-	// Permission check
-	allowed, err := UserHasPermission(channel, name, AddType, sender, message)
-	if !allowed {
-		return nil, NoPermissionError
-	}
-	if err != nil {
-		return nil, err
-	}
 
 	channelID, err := strconv.Atoi(message.ChannelID)
 
 	parsedResponse := parser.ParseResponse(response)
 	responseMap := make(map[string]parser.ParsedResponse)
-	responseMap[DefaultResponseKey] = *parsedResponse
+	responseMap[chatplugins.DefaultResponseKey] = *parsedResponse
 	fmt.Println("responseMap: ", responseMap)
 
 	// Parse command and response
@@ -53,6 +37,7 @@ func ParseCommand(
 		BotID:          botID,
 		ChannelID:      int64(channelID),
 		Name:           name,
+		PluginType:     CommandResponsePluginType,
 		Responses:      responseMap,
 		CooldownSecond: 5,
 		Enabled:        true,
@@ -80,16 +65,4 @@ func ParseNameAndResponseFromChat(text string) (string, string, error) {
 	}
 
 	return fields[1], response, nil
-}
-
-func UserHasPermission(channel string, commandName string, updateType CommandUpdateType,
-	sender *twitch_irc.User, message *twitch_irc.Message) (bool, error) {
-	/*isMod := message.Tags["mod"]
-	isBroadcaster := sender.Username == channel
-	// TODO: How to check if user is staff?
-	if isMod == "1" || isBroadcaster {
-		return true, nil
-	}
-	return false, nil*/
-	return true, nil
 }

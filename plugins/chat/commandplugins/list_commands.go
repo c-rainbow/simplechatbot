@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/c-rainbow/simplechatbot/client"
-	chat_plugins "github.com/c-rainbow/simplechatbot/plugins/chat"
+	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
 	"github.com/c-rainbow/simplechatbot/repository"
 
 	models "github.com/c-rainbow/simplechatbot/models"
@@ -22,10 +22,10 @@ type ListCommandsPlugin struct {
 	repo      repository.SingleBotRepositoryT
 }
 
-var _ chat_plugins.ChatCommandPlugin = (*ListCommandsPlugin)(nil)
+var _ chatplugins.ChatCommandPlugin = (*ListCommandsPlugin)(nil)
 
 func NewListCommandsPlugin(
-	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chat_plugins.ChatCommandPlugin {
+	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPlugin {
 	return &ListCommandsPlugin{ircClient: ircClient, repo: repo}
 }
 

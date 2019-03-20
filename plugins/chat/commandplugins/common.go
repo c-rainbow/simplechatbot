@@ -1,15 +1,20 @@
 package commandplugins
 
 import (
+	"errors"
 	"log"
 
-	"github.com/c-rainbow/simplechatbot/client"
-	commands "github.com/c-rainbow/simplechatbot/commands"
+	client "github.com/c-rainbow/simplechatbot/client"
 	models "github.com/c-rainbow/simplechatbot/models"
 	parser "github.com/c-rainbow/simplechatbot/parser"
 	plugins "github.com/c-rainbow/simplechatbot/plugins"
-	"github.com/c-rainbow/simplechatbot/repository"
+	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
+	repository "github.com/c-rainbow/simplechatbot/repository"
 	twitch_irc "github.com/gempir/go-twitch-irc"
+)
+
+var (
+	NoPermissionError = errors.New("User has no permission to call this command")
 )
 
 // Common read function by add/edit/delete/respond commands.
@@ -65,7 +70,7 @@ func CommonAction(
 	}
 
 	// Parse command response
-	parsedCommand, err := commands.ParseCommand(botInfo.TwitchID, message.Text, channel, sender, message)
+	parsedCommand, err := ParseCommand(botInfo.TwitchID, message.Text, channel, sender, message)
 	if err != nil {
 		return "Failed to parse command", err
 	}
@@ -82,7 +87,7 @@ func CommonAction(
 
 	// TODO: Add new variable, for the name of command just added
 	// Get default response for successful add.
-	successResponse, exists := command.Responses[commands.DefaultResponseKey]
+	successResponse, exists := command.Responses[chatplugins.DefaultResponseKey]
 	// This shouldn't happen in normal case. Default response always exists
 	// if command is added in a correct way.
 	if !exists {

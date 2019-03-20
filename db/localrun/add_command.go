@@ -3,10 +3,9 @@ package localrun
 import (
 	"fmt"
 
-	"github.com/c-rainbow/simplechatbot/commands"
-
 	"github.com/c-rainbow/simplechatbot/models"
 	"github.com/c-rainbow/simplechatbot/parser"
+	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
 	"github.com/c-rainbow/simplechatbot/plugins/chat/commandplugins"
 	"github.com/c-rainbow/simplechatbot/repository"
 )
@@ -26,21 +25,32 @@ func AddNewCommand() {
 		Username: DefaultChannelUsername,
 	}
 
-	responseMap := make(map[string]parser.ParsedResponse)
-	responseMap[commands.DefaultResponseKey] = *parser.ParseResponse("@$(user) 명령어를 성공적으로 추가하였습니다")
+	commandToAdd := BuildCommand(
+		botInfo.TwitchID,
+		chanInfo.TwitchID,
+		"!addcom",
+		commandplugins.AddCommandPluginType,
+		"@$(user) 명령어를 성공적으로 추가하였습니다")
+	err := repo.AddCommand(chanInfo.Username, commandToAdd)
+	if err != nil {
+		fmt.Println("Error while adding bot ", botInfo.TwitchID, "to channel: ", err.Error())
+	}
+}
 
-	commandToAdd := models.Command{
-		BotID:          botInfo.TwitchID,
-		ChannelID:      chanInfo.TwitchID,
-		Name:           "!addcom",
-		PluginType:     commandplugins.AddCommandPluginType,
-		Responses:      responseMap, // make(map[string]parser.ParsedResponse),
+func BuildCommand(
+	botID int64, channelID int64, name string, pluginType string, defaultResponse string) *models.Command {
+
+	responseMap := make(map[string]parser.ParsedResponse)
+	responseMap[chatplugins.DefaultResponseKey] = *parser.ParseResponse(defaultResponse)
+
+	return &models.Command{
+		BotID:          botID,
+		ChannelID:      channelID,
+		Name:           name,
+		PluginType:     pluginType,
+		Responses:      responseMap,
 		CooldownSecond: 5,
 		Enabled:        true,
 		Group:          "",
-	}
-	err := repo.AddCommand(chanInfo.Username, &commandToAdd)
-	if err != nil {
-		fmt.Println("Error while adding bot ", botInfo.TwitchID, "to channel: ", err.Error())
 	}
 }

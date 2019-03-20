@@ -43,7 +43,7 @@ func main1() {
 }
 
 func main2() {
-	localrun.AddNewCommand()
+	localrun.ResetChannelsTable()
 }
 
 // Run bot

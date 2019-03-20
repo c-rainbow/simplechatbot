@@ -35,6 +35,5 @@ func DeleteAllTables() error {
 		fmt.Println("Error while deleting Channels table. ", err.Error())
 		return err
 	}
-
 	return nil
 }

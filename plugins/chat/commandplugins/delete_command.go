@@ -2,7 +2,7 @@ package commandplugins
 
 import (
 	"github.com/c-rainbow/simplechatbot/client"
-	chat_plugins "github.com/c-rainbow/simplechatbot/plugins/chat"
+	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
 	"github.com/c-rainbow/simplechatbot/repository"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
@@ -16,7 +16,12 @@ type DeleteCommandPlugin struct {
 	repo      repository.SingleBotRepositoryT
 }
 
-var _ chat_plugins.ChatCommandPlugin = (*DeleteCommandPlugin)(nil)
+var _ chatplugins.ChatCommandPlugin = (*DeleteCommandPlugin)(nil)
+
+func NewDeleteCommandPlugin(
+	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPlugin {
+	return &DeleteCommandPlugin{ircClient: ircClient, repo: repo}
+}
 
 func (plugin *DeleteCommandPlugin) Run(
 	commandName string, channel string, sender *twitch_irc.User, message *twitch_irc.Message) error {

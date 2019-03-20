@@ -1,4 +1,4 @@
-package commandplugins
+package chatplugins
 
 import (
 	twitch_irc "github.com/gempir/go-twitch-irc"
