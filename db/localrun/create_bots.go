@@ -3,13 +3,13 @@ package localrun
 import (
 	"fmt"
 
-	simplechatbot "github.com/c-rainbow/simplechatbot"
 	"github.com/c-rainbow/simplechatbot/models"
+	"github.com/c-rainbow/simplechatbot/repository"
 )
 
 // Add new bot to local DynamoDB
 func AddNewBot() {
-	repo := simplechatbot.NewBaseRepository()
+	repo := repository.NewBaseRepository()
 
 	// Make sure that no bots exist first
 	bots := repo.GetAllBots()

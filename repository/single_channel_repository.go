@@ -1,4 +1,4 @@
-package simplechatbot
+package repository
 
 import (
 	models "github.com/c-rainbow/simplechatbot/models"

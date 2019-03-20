@@ -1,4 +1,4 @@
-package simplechatbot
+package repository
 
 import (
 	"errors"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	flags "github.com/c-rainbow/simplechatbot/flags"
 	"github.com/c-rainbow/simplechatbot/models"
 	"github.com/guregu/dynamo"
 )
@@ -51,9 +52,9 @@ var _ BaseRepositoryT = (*BaseRepository)(nil)
 func NewBaseRepository() *BaseRepository {
 	// Initialize flag values
 	db := dynamo.New(session.New(), &aws.Config{
-		Endpoint:   aws.String(DatabaseEndpoint),
-		Region:     aws.String(DatabaseRegion),
-		DisableSSL: aws.Bool(DisableSSL),
+		Endpoint:   aws.String(flags.DatabaseEndpoint),
+		Region:     aws.String(flags.DatabaseRegion),
+		DisableSSL: aws.Bool(flags.DisableSSL),
 	})
 
 	channelMap := make(map[string]*models.Channel)

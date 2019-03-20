@@ -4,8 +4,9 @@ package localrun
 import (
 	"fmt"
 
-	"github.com/c-rainbow/simplechatbot"
+	"github.com/c-rainbow/simplechatbot/flags"
 	"github.com/c-rainbow/simplechatbot/models"
+	"github.com/c-rainbow/simplechatbot/repository"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -16,9 +17,9 @@ import (
 // The function assumes that tables with the same names do not exist.
 func CreateAllTables() error {
 	db := dynamo.New(session.New(), &aws.Config{
-		Endpoint:   aws.String(simplechatbot.DatabaseEndpoint),
-		Region:     aws.String(simplechatbot.DatabaseRegion),
-		DisableSSL: aws.Bool(simplechatbot.DisableSSL),
+		Endpoint:   aws.String(flags.DatabaseEndpoint),
+		Region:     aws.String(flags.DatabaseRegion),
+		DisableSSL: aws.Bool(flags.DisableSSL),
 	})
 
 	var err error
@@ -35,7 +36,7 @@ func CreateAllTables() error {
 
 	// Creates Channels table.
 	err = db.
-		CreateTable(simplechatbot.ChannelTableName, &models.Channel{}).  // Create table
+		CreateTable(repository.ChannelTableName, &models.Channel{}).     // Create table
 		Project("Username-index", dynamo.IncludeProjection, "Username"). // Create index
 		Run()
 	if err != nil {

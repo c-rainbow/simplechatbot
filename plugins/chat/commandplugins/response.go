@@ -3,10 +3,11 @@ package commandplugins
 import (
 	"errors"
 
+	"github.com/c-rainbow/simplechatbot/client"
 	"github.com/c-rainbow/simplechatbot/commands"
 	chat_plugins "github.com/c-rainbow/simplechatbot/plugins/chat"
+	"github.com/c-rainbow/simplechatbot/repository"
 
-	bot "github.com/c-rainbow/simplechatbot"
 	models "github.com/c-rainbow/simplechatbot/models"
 	parser "github.com/c-rainbow/simplechatbot/parser"
 	twitch_irc "github.com/gempir/go-twitch-irc"
@@ -24,8 +25,8 @@ var (
 
 // Plugin that responds to user-defined chat commands.
 type CommandResponsePlugin struct {
-	ircClient *bot.TwitchClient
-	repo      bot.SingleBotRepositoryT
+	ircClient client.TwitchClientT
+	repo      repository.SingleBotRepositoryT
 }
 
 var _ chat_plugins.ChatCommandPlugin = (*CommandResponsePlugin)(nil)

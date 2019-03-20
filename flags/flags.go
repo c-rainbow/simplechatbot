@@ -1,4 +1,4 @@
-package simplechatbot
+package flags
 
 import "flag"
 

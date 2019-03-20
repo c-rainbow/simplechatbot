@@ -1,19 +1,18 @@
-package simplechatbot
+package chathandler
 
 import (
 	"fmt"
 	"log"
-	"sort"
 	"strings"
 
+	client "github.com/c-rainbow/simplechatbot/client"
 	commands "github.com/c-rainbow/simplechatbot/commands"
 	models "github.com/c-rainbow/simplechatbot/models"
-	"github.com/c-rainbow/simplechatbot/parser"
-	twitch_irc "github.com/gempir/go-twitch-irc"
-)
+	parser "github.com/c-rainbow/simplechatbot/parser"
+	repository "github.com/c-rainbow/simplechatbot/repository"
 
-var (
-	ReservedCommands = []string{"!addcom", "!editcom", "!delcom"}
+	commandplugins "github.com/c-rainbow/simplechatbot/plugins/chat/commandplugins"
+	twitch_irc "github.com/gempir/go-twitch-irc"
 )
 
 type ChatMessageHandlerT interface {
@@ -22,15 +21,15 @@ type ChatMessageHandlerT interface {
 
 type ChatMessageHandler struct {
 	botInfo   *models.Bot
-	repo      SingleBotRepositoryT
-	ircClient *TwitchClient
+	repo      repository.SingleBotRepositoryT
+	ircClient client.TwitchClientT
 	chatters  map[string]bool
 }
 
 var _ ChatMessageHandlerT = (*ChatMessageHandler)(nil)
 
 func NewChatMessageHandler(
-	botInfo *models.Bot, repo SingleBotRepositoryT, ircClient *TwitchClient) *ChatMessageHandler {
+	botInfo *models.Bot, repo repository.SingleBotRepositoryT, ircClient client.TwitchClientT) *ChatMessageHandler {
 	return &ChatMessageHandler{botInfo: botInfo, repo: repo, ircClient: ircClient, chatters: make(map[string]bool)}
 }
 
@@ -45,17 +44,8 @@ func (handler *ChatMessageHandler) OnNewMessage(
 	if commands.ReservedCommands[commandName] {
 		var err error
 		if commandName == commands.ListCommandsKey || commandName == commands.ListCommandsKeyKor {
-			var commands []*models.Command
-			commands, err = handler.repo.ListCommands(channel)
-			commandNames := make([]string, len(commands))
-			for i, command := range commands {
-				fmt.Println("Command name: ", command.Name)
-				commandNames[i] = command.Name
-			}
-			fmt.Println("command names:", commandNames)
-			sort.Strings(commandNames)
-			toSay = strings.Join(commandNames, ", ")
-			fmt.Println("toSay:", toSay)
+			plugin := commandplugins.NewListCommandsPlugin(handler.ircClient, handler.repo)
+			err = plugin.Run(commandName, channel, &sender, &message)
 		} else {
 
 			parsedCommand, err := commands.ParseCommand(handler.botInfo.TwitchID, message.Text, channel, &sender, &message)
@@ -65,7 +55,10 @@ func (handler *ChatMessageHandler) OnNewMessage(
 			}
 			switch commandName {
 			case commands.AddCommandKey, commands.AddCommandKeyKor:
-				err = handler.repo.AddCommand(channel, parsedCommand)
+				// commandplugins.AddCommand{}
+				// err = handler.repo.AddCommand(channel, parsedCommand)
+				plugin := commandplugins.NewAddCommandPlugin(handler.ircClient, handler.repo)
+				err = plugin.Run(commandName, channel, &sender, &message)
 			case commands.EditCommandKey, commands.EditCommandKeyKor:
 				err = handler.repo.EditCommand(channel, parsedCommand)
 			case commands.DeleteCommandKey, commands.DeleteCommandKeyKor:

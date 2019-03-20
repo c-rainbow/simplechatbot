@@ -1,24 +1,27 @@
 // Bot struct and functions
 
-package simplechatbot
+package bot
 
 import (
 	"log"
 
+	chathandler "github.com/c-rainbow/simplechatbot/chathandler"
+	client "github.com/c-rainbow/simplechatbot/client"
 	models "github.com/c-rainbow/simplechatbot/models"
+	repository "github.com/c-rainbow/simplechatbot/repository"
 )
 
 // TwitchChatBot Twitch chat bot struct
 type TwitchChatBot struct {
 	botInfo        *models.Bot
-	ircClient      *TwitchClient
-	repo           BaseRepositoryT
-	messageHandler ChatMessageHandlerT
+	ircClient      client.TwitchClientT
+	repo           repository.BaseRepositoryT
+	messageHandler chathandler.ChatMessageHandlerT
 }
 
 func NewTwitchChatBot(
-	botInfo *models.Bot, ircClient *TwitchClient, repo BaseRepositoryT,
-	messageHandler ChatMessageHandlerT) *TwitchChatBot {
+	botInfo *models.Bot, ircClient client.TwitchClientT, repo repository.BaseRepositoryT,
+	messageHandler chathandler.ChatMessageHandlerT) *TwitchChatBot {
 	return &TwitchChatBot{
 		ircClient:      ircClient,
 		botInfo:        botInfo,

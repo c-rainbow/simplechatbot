@@ -3,12 +3,12 @@ package localrun
 import (
 	"fmt"
 
-	simplechatbot "github.com/c-rainbow/simplechatbot"
+	"github.com/c-rainbow/simplechatbot/repository"
 )
 
 // Add new bot to local DynamoDB
 func GetChannelsForBot() {
-	repo := simplechatbot.NewBaseRepository()
+	repo := repository.NewBaseRepository()
 
 	// in CreateChannels function, the created channel has BotIDs {111, 222, 333}
 	botID := int64(222)

@@ -3,13 +3,13 @@ package localrun
 import (
 	"fmt"
 
-	simplechatbot "github.com/c-rainbow/simplechatbot"
 	"github.com/c-rainbow/simplechatbot/models"
+	"github.com/c-rainbow/simplechatbot/repository"
 )
 
 // Add new channel to local DynamoDB
 func AddNewChannel() {
-	repo := simplechatbot.NewBaseRepository()
+	repo := repository.NewBaseRepository()
 
 	// Make sure that no channels exist first
 	channels := repo.GetAllChannels()

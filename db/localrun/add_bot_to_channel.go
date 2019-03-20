@@ -3,13 +3,13 @@ package localrun
 import (
 	"fmt"
 
-	simplechatbot "github.com/c-rainbow/simplechatbot"
 	"github.com/c-rainbow/simplechatbot/models"
+	"github.com/c-rainbow/simplechatbot/repository"
 )
 
 // Add new bot to channel
 func AddBotToChannel() {
-	repo := simplechatbot.NewBaseRepository()
+	repo := repository.NewBaseRepository()
 
 	existingChannels := repo.GetAllChannels()
 	fmt.Println("All existing channels: ", existingChannels[0])

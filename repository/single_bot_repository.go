@@ -1,4 +1,4 @@
-package simplechatbot
+package repository
 
 import (
 	"fmt"

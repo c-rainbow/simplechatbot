@@ -1,8 +1,9 @@
 package commandplugins
 
 import (
-	bot "github.com/c-rainbow/simplechatbot"
+	"github.com/c-rainbow/simplechatbot/client"
 	chat_plugins "github.com/c-rainbow/simplechatbot/plugins/chat"
+	"github.com/c-rainbow/simplechatbot/repository"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
 
@@ -11,8 +12,8 @@ const (
 )
 
 type DeleteCommandPlugin struct {
-	ircClient *bot.TwitchClient
-	repo      bot.SingleBotRepositoryT
+	ircClient client.TwitchClientT
+	repo      repository.SingleBotRepositoryT
 }
 
 var _ chat_plugins.ChatCommandPlugin = (*DeleteCommandPlugin)(nil)

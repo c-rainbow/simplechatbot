@@ -3,17 +3,18 @@ package commandplugins
 import (
 	"log"
 
-	bot "github.com/c-rainbow/simplechatbot"
+	"github.com/c-rainbow/simplechatbot/client"
 	commands "github.com/c-rainbow/simplechatbot/commands"
 	models "github.com/c-rainbow/simplechatbot/models"
 	parser "github.com/c-rainbow/simplechatbot/parser"
 	plugins "github.com/c-rainbow/simplechatbot/plugins"
+	"github.com/c-rainbow/simplechatbot/repository"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
 
 // Common read function by add/edit/delete/respond commands.
 // They are all identical except plugin type check part and actionFunction parameter
-func CommonRun(repo bot.SingleBotRepositoryT, ircClient *bot.TwitchClient, expectedPluginType string,
+func CommonRun(repo repository.SingleBotRepositoryT, ircClient client.TwitchClientT, expectedPluginType string,
 	actionFunction func(string, *models.Command) error, commandName string, channel string,
 	sender *twitch_irc.User, message *twitch_irc.Message) error {
 
@@ -25,7 +26,7 @@ func CommonRun(repo bot.SingleBotRepositoryT, ircClient *bot.TwitchClient, expec
 
 // Common read function by add/edit/delete/respond commands.
 // They are all identical except plugin type check part
-func CommonRead(repo bot.SingleBotRepositoryT, commandName string, channel string, expectedPluginType string,
+func CommonRead(repo repository.SingleBotRepositoryT, commandName string, channel string, expectedPluginType string,
 	sender *twitch_irc.User, message *twitch_irc.Message) (*models.Command, error) {
 	// Get command model from the repository
 	command := repo.GetCommandByChannelAndName(channel, commandName)
@@ -68,6 +69,9 @@ func CommonAction(
 	if err != nil {
 		return "Failed to parse command", err
 	}
+
+	// TODO:Validate
+
 	// actionFunction is One of AddCommand, EditCommand, DeleteCommand
 	err = actionFunction(channel, parsedCommand)
 	if err != nil {
@@ -96,7 +100,7 @@ func CommonAction(
 	return converted, nil
 }
 
-func CommonOutput(ircClient *bot.TwitchClient, channel string, toSay string, err error) error {
+func CommonOutput(ircClient client.TwitchClientT, channel string, toSay string, err error) error {
 	// Even with error, the plugin might respond that "There is unknown error"
 	if toSay != "" {
 		ircClient.Say(channel, toSay)
