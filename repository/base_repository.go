@@ -117,7 +117,7 @@ func (repo *BaseRepository) GetAllChannelsForBot(botID int64) []*models.Channel 
 // returns nil if command does not exist with the combination
 func (repo *BaseRepository) GetCommand(botID int64, channel string, commandName string) *models.Command {
 	command, exists := repo.channelMap[channel].Commands[commandName]
-	if exists {
+	if exists && command.BotID == botID {
 		return &command
 	} else {
 		return nil

@@ -22,11 +22,15 @@ type ListCommandsPlugin struct {
 	repo      repository.SingleBotRepositoryT
 }
 
-var _ chatplugins.ChatCommandPlugin = (*ListCommandsPlugin)(nil)
+var _ chatplugins.ChatCommandPluginT = (*ListCommandsPlugin)(nil)
 
 func NewListCommandsPlugin(
-	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPlugin {
+	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginT {
 	return &ListCommandsPlugin{ircClient: ircClient, repo: repo}
+}
+
+func (plugin *ListCommandsPlugin) GetPluginType() string {
+	return ListCommandsPluginType
 }
 
 func (plugin *ListCommandsPlugin) Run(

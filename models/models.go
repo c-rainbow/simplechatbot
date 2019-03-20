@@ -7,7 +7,7 @@ import (
 )
 
 // User levels for command.
-// Externally, only Everyone, Moderator, Stremer will be available.
+// Externally, only Everyone, Moderator, Streamer will be available.
 const (
 	// Everyone can call the command
 	Everyone int = 1 << 0

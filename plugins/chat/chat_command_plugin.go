@@ -14,6 +14,11 @@ plugin usually silently runs in background and update chatter's last chat timest
 but when called in chat by a command, such as "!lastseen [username]", then it answers
 back to the chat with the stored data.
 */
-type ChatCommandPlugin interface {
+type ChatCommandPluginT interface {
+	GetPluginType() string
 	Run(commandName string, channel string, sender *twitch_irc.User, message *twitch_irc.Message) error
+}
+
+type ChatCommandPluginFactoryT interface {
+	Build() ChatCommandPluginT
 }

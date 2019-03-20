@@ -16,11 +16,15 @@ type DeleteCommandPlugin struct {
 	repo      repository.SingleBotRepositoryT
 }
 
-var _ chatplugins.ChatCommandPlugin = (*DeleteCommandPlugin)(nil)
+var _ chatplugins.ChatCommandPluginT = (*DeleteCommandPlugin)(nil)
 
 func NewDeleteCommandPlugin(
-	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPlugin {
+	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginT {
 	return &DeleteCommandPlugin{ircClient: ircClient, repo: repo}
+}
+
+func (plugin *DeleteCommandPlugin) GetPluginType() string {
+	return DeleteCommandPluginType
 }
 
 func (plugin *DeleteCommandPlugin) Run(

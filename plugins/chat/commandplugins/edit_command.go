@@ -16,11 +16,15 @@ type EditCommandPlugin struct {
 	repo      repository.SingleBotRepositoryT
 }
 
-var _ chatplugins.ChatCommandPlugin = (*EditCommandPlugin)(nil)
+var _ chatplugins.ChatCommandPluginT = (*EditCommandPlugin)(nil)
 
 func NewEditCommandPlugin(
-	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPlugin {
+	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginT {
 	return &EditCommandPlugin{ircClient: ircClient, repo: repo}
+}
+
+func (plugin *EditCommandPlugin) GetPluginType() string {
+	return EditCommandPluginType
 }
 
 func (plugin *EditCommandPlugin) Run(

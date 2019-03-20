@@ -44,6 +44,7 @@ func (handler *ChatMessageHandler) OnNewMessage(
 		handler.ircClient.Disconnect()
 	}
 
+	// TODO: If command is retrieved, why not use this directly?
 	// Check if command with the same name exists
 	// The repository (of type SingleBotRepositoryT) ensures that the correct bot responds to the command.
 	// If this line is executed in a different bot, nil would be returned.
@@ -52,7 +53,11 @@ func (handler *ChatMessageHandler) OnNewMessage(
 		return
 	}
 
-	var plugin chat_plugins.ChatCommandPlugin
+	msgQueue := make(chan *models.Command)
+
+	msgQueue <- command
+
+	var plugin chat_plugins.ChatCommandPluginT
 	// TODO: Eventually, get plugin from a factory or manager
 	switch command.PluginType {
 	// Simply responding to command, no other action
@@ -75,10 +80,13 @@ func (handler *ChatMessageHandler) OnNewMessage(
 	}
 
 	if plugin != nil {
-		err := plugin.Run(commandName, channel, &sender, &message)
-		if err != nil {
-			log.Println("Error while running plugin for '", commandName, "': ", err.Error())
-		}
+		go func() {
+
+			err := plugin.Run(commandName, channel, &sender, &message)
+			if err != nil {
+				log.Println("Error while running plugin for '", commandName, "': ", err.Error())
+			}
+		}()
 	}
 
 }
