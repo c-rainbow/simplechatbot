@@ -6,12 +6,18 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/c-rainbow/simplechatbot/plugins/chat/games"
+
 	"github.com/c-rainbow/simplechatbot/client"
 	models "github.com/c-rainbow/simplechatbot/models"
-	"github.com/c-rainbow/simplechatbot/plugins/chat"
+	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
 	"github.com/c-rainbow/simplechatbot/plugins/chat/commandplugins"
 	"github.com/c-rainbow/simplechatbot/repository"
 	twitch_irc "github.com/gempir/go-twitch-irc"
+)
+
+const (
+	JobChanDefaultCapacity = 100
 )
 
 /*
@@ -31,7 +37,7 @@ type ChatCommandPluginManagerT interface {
 type ChatCommandPluginManager struct {
 	channelMapMutex sync.Mutex
 	repo            repository.SingleBotRepositoryT
-	chanMap         map[string]chan *WorkItem
+	chanMap         map[string]chan WorkItem
 }
 
 var _ ChatCommandPluginManagerT = (*ChatCommandPluginManager)(nil)
@@ -46,13 +52,14 @@ type WorkItem struct {
 func NewChatCommandPluginManager(
 	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) ChatCommandPluginManagerT {
 	manager := ChatCommandPluginManager{
-		channelMapMutex: sync.Mutex{}, repo: repo, chanMap: make(map[string]chan *WorkItem)}
+		channelMapMutex: sync.Mutex{}, repo: repo, chanMap: make(map[string]chan WorkItem)}
 
 	manager.RegisterPlugin(commandplugins.NewAddCommandPluginFactory(ircClient, repo), 1)
 	manager.RegisterPlugin(commandplugins.NewDeleteCommandPluginFactory(ircClient, repo), 1)
 	manager.RegisterPlugin(commandplugins.NewEditCommandPluginFactory(ircClient, repo), 1)
 	manager.RegisterPlugin(commandplugins.NewListCommandsPluginFactory(ircClient, repo), 1)
 	manager.RegisterPlugin(commandplugins.NewCommandResponsePluginFactory(ircClient, repo), 1)
+	manager.RegisterPlugin(games.NewNumberGuesserPluginFactory(ircClient, repo), 1)
 
 	return &manager
 }
@@ -66,7 +73,7 @@ func (manager *ChatCommandPluginManager) RegisterPlugin(
 	if exists {
 		return errors.New("same type of plugin is already registered")
 	} else {
-		jobChannel = make(chan *WorkItem)
+		jobChannel = make(chan WorkItem, JobChanDefaultCapacity)
 		manager.chanMap[pluginType] = jobChannel
 	}
 	manager.channelMapMutex.Unlock()
@@ -76,7 +83,7 @@ func (manager *ChatCommandPluginManager) RegisterPlugin(
 		plugin := factory.BuildNewPlugin()
 		go func() {
 			for workItem := range jobChannel {
-				plugin.Run(workItem.command.Name, workItem.channel, workItem.sender, workItem.message)
+				plugin.Run(workItem.command, workItem.channel, workItem.sender, workItem.message)
 			}
 		}()
 	}
@@ -96,7 +103,7 @@ func (manager *ChatCommandPluginManager) ProcessChat(
 	pluginType := command.PluginType
 	chanToAdd := manager.chanMap[pluginType]
 	if chanToAdd != nil {
-		chanToAdd <- &WorkItem{command: command, sender: sender, message: message}
+		chanToAdd <- WorkItem{command: command, channel: channel, sender: sender, message: message}
 	} else {
 		// chanToAdd shouldn't be nil. This is software bug.
 		log.Println("Something is wrong. chanToAdd is nil")

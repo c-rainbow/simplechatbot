@@ -34,9 +34,9 @@ func (plugin *ListCommandsPlugin) GetPluginType() string {
 }
 
 func (plugin *ListCommandsPlugin) Run(
-	commandName string, channel string, sender *twitch_irc.User, message *twitch_irc.Message) error {
+	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message) error {
 	// Read-action-print loop
-	command, err := CommonRead(plugin.repo, commandName, channel, ListCommandsPluginType, sender, message)
+	command, err := CommonRead(plugin.repo, command, channel, ListCommandsPluginType, sender, message)
 	toSay, err := plugin.action(command, channel, sender, message, err)
 	err = CommonOutput(plugin.ircClient, channel, toSay, err)
 	if err != nil {

@@ -4,7 +4,7 @@ const (
 
 	// Info for default bot
 	DefaultBotTwitchID   = 402646798
-	DefaultBotUsername   = "" // Username, not display name
+	DefaultBotUsername   = "intern_bot" // Username, not display name
 	DefaultBotOauthToken = ""
 
 	// Info for default channel

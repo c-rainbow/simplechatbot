@@ -43,6 +43,7 @@ type BaseRepositoryT interface {
 }
 
 type BaseRepository struct {
+	// TODO: Add write mutex here
 	channelMap map[string]*models.Channel // Channel name -> command name -> command model
 	db         *dynamo.DB
 }

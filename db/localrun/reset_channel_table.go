@@ -14,6 +14,7 @@ import (
 	"github.com/c-rainbow/simplechatbot/parser"
 	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
 	"github.com/c-rainbow/simplechatbot/plugins/chat/commandplugins"
+	"github.com/c-rainbow/simplechatbot/plugins/chat/games"
 	"github.com/c-rainbow/simplechatbot/repository"
 )
 
@@ -67,6 +68,8 @@ func ResetChannelsTable() {
 	AddCommandToMap(commandMap, botID, channelID, "!명령어", commandplugins.ListCommandsPluginType,
 		"@$(user) !명령어 는 아직 지원되지 않습니다")
 
+	AddCommandToMap(commandMap, botID, channelID, "!숫자", games.NumberGuesserPluginType, "")
+
 	err = repo.CreateNewChannel(chanInfo)
 	if err != nil {
 		fmt.Println("Error while adding channel ", err.Error())
@@ -74,7 +77,7 @@ func ResetChannelsTable() {
 }
 
 func AddCommandToMap(commandMap map[string]models.Command, botID int64, channelID int64, name string, pluginType string, defaultResponse string) {
-	command := BuildCommand(botID, channelID, name, pluginType, defaultResponse)
+	command := buildCommand(botID, channelID, name, pluginType, defaultResponse)
 	commandMap[name] = *command
 }
 

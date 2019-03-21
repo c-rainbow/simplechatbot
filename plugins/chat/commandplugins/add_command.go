@@ -2,6 +2,7 @@ package commandplugins
 
 import (
 	"github.com/c-rainbow/simplechatbot/client"
+	models "github.com/c-rainbow/simplechatbot/models"
 	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
 	"github.com/c-rainbow/simplechatbot/repository"
 	twitch_irc "github.com/gempir/go-twitch-irc"
@@ -28,28 +29,28 @@ func (plugin *AddCommandPlugin) GetPluginType() string {
 }
 
 func (plugin *AddCommandPlugin) Run(
-	commandName string, channel string, sender *twitch_irc.User, message *twitch_irc.Message) error {
+	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message) error {
 	repo := plugin.repo
-	return CommonRun(repo, plugin.ircClient, AddCommandPluginType, repo.AddCommand, commandName,
+	return CommonRun(repo, plugin.ircClient, AddCommandPluginType, repo.AddCommand, command,
 		channel, sender, message)
 }
 
-type AddCommandPluginFactory struct {
+type AddCommandPluginFactoryT struct {
 	ircClient client.TwitchClientT
 	repo      repository.SingleBotRepositoryT
 }
 
-var _ chatplugins.ChatCommandPluginFactoryT = (*AddCommandPluginFactory)(nil)
+var _ chatplugins.ChatCommandPluginFactoryT = (*AddCommandPluginFactoryT)(nil)
 
 func NewAddCommandPluginFactory(
 	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginFactoryT {
-	return &AddCommandPluginFactory{ircClient: ircClient, repo: repo}
+	return &AddCommandPluginFactoryT{ircClient: ircClient, repo: repo}
 }
 
-func (plugin *AddCommandPluginFactory) GetPluginType() string {
+func (plugin *AddCommandPluginFactoryT) GetPluginType() string {
 	return AddCommandPluginType
 }
 
-func (plugin *AddCommandPluginFactory) BuildNewPlugin() chatplugins.ChatCommandPluginT {
+func (plugin *AddCommandPluginFactoryT) BuildNewPlugin() chatplugins.ChatCommandPluginT {
 	return NewAddCommandPlugin(plugin.ircClient, plugin.repo)
 }

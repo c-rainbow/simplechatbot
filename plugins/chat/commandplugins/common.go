@@ -20,21 +20,19 @@ var (
 // Common read function by add/edit/delete/respond commands.
 // They are all identical except plugin type check part and actionFunction parameter
 func CommonRun(repo repository.SingleBotRepositoryT, ircClient client.TwitchClientT, expectedPluginType string,
-	actionFunction func(string, *models.Command) error, commandName string, channel string,
+	actionFunction func(string, *models.Command) error, command *models.Command, channel string,
 	sender *twitch_irc.User, message *twitch_irc.Message) error {
 
 	// Read-action-print loop
-	command, err := CommonRead(repo, commandName, channel, expectedPluginType, sender, message)
+	command, err := CommonRead(repo, command, channel, expectedPluginType, sender, message)
 	toSay, err := CommonAction(repo.GetBotInfo(), actionFunction, command, channel, sender, message, err)
 	return CommonOutput(ircClient, channel, toSay, err)
 }
 
 // Common read function by add/edit/delete/respond commands.
 // They are all identical except plugin type check part
-func CommonRead(repo repository.SingleBotRepositoryT, commandName string, channel string, expectedPluginType string,
-	sender *twitch_irc.User, message *twitch_irc.Message) (*models.Command, error) {
-	// Get command model from the repository
-	command := repo.GetCommandByChannelAndName(channel, commandName)
+func CommonRead(repo repository.SingleBotRepositoryT, command *models.Command, channel string,
+	expectedPluginType string, sender *twitch_irc.User, message *twitch_irc.Message) (*models.Command, error) {
 	if command == nil {
 		return nil, CommandNotFoundError
 	}
@@ -114,7 +112,7 @@ func CommonOutput(ircClient client.TwitchClientT, channel string, toSay string, 
 		// Don't print anything because this is abnormal case.
 		// In normal workflow, chat message handler already checks for existence
 		// TODO: log error in more detail
-		log.Fatal("Unexpected error:", err)
+		log.Println("Unexpected error:", err)
 		return err
 	}
 

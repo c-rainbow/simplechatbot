@@ -1,6 +1,7 @@
 package chatplugins
 
 import (
+	"github.com/c-rainbow/simplechatbot/models"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
 
@@ -16,7 +17,7 @@ back to the chat with the stored data.
 */
 type ChatCommandPluginT interface {
 	GetPluginType() string
-	Run(commandName string, channel string, sender *twitch_irc.User, message *twitch_irc.Message) error
+	Run(command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message) error
 }
 
 type ChatCommandPluginFactoryT interface {
