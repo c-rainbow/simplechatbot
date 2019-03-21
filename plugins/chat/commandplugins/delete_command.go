@@ -33,3 +33,23 @@ func (plugin *DeleteCommandPlugin) Run(
 	return CommonRun(repo, plugin.ircClient, DeleteCommandPluginType, repo.DeleteCommand, commandName,
 		channel, sender, message)
 }
+
+type DeleteCommandPluginFactory struct {
+	ircClient client.TwitchClientT
+	repo      repository.SingleBotRepositoryT
+}
+
+var _ chatplugins.ChatCommandPluginFactoryT = (*DeleteCommandPluginFactory)(nil)
+
+func NewDeleteCommandPluginFactory(
+	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginFactoryT {
+	return &DeleteCommandPluginFactory{ircClient: ircClient, repo: repo}
+}
+
+func (plugin *DeleteCommandPluginFactory) GetPluginType() string {
+	return DeleteCommandPluginType
+}
+
+func (plugin *DeleteCommandPluginFactory) BuildNewPlugin() chatplugins.ChatCommandPluginT {
+	return NewDeleteCommandPlugin(plugin.ircClient, plugin.repo)
+}

@@ -33,3 +33,23 @@ func (plugin *AddCommandPlugin) Run(
 	return CommonRun(repo, plugin.ircClient, AddCommandPluginType, repo.AddCommand, commandName,
 		channel, sender, message)
 }
+
+type AddCommandPluginFactory struct {
+	ircClient client.TwitchClientT
+	repo      repository.SingleBotRepositoryT
+}
+
+var _ chatplugins.ChatCommandPluginFactoryT = (*AddCommandPluginFactory)(nil)
+
+func NewAddCommandPluginFactory(
+	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginFactoryT {
+	return &AddCommandPluginFactory{ircClient: ircClient, repo: repo}
+}
+
+func (plugin *AddCommandPluginFactory) GetPluginType() string {
+	return AddCommandPluginType
+}
+
+func (plugin *AddCommandPluginFactory) BuildNewPlugin() chatplugins.ChatCommandPluginT {
+	return NewAddCommandPlugin(plugin.ircClient, plugin.repo)
+}

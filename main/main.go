@@ -12,6 +12,8 @@ import (
 	"github.com/c-rainbow/simplechatbot/db/localrun"
 	"github.com/c-rainbow/simplechatbot/models"
 	"github.com/c-rainbow/simplechatbot/parser"
+	pluginmanager "github.com/c-rainbow/simplechatbot/plugins/chat/manager"
+
 	repository "github.com/c-rainbow/simplechatbot/repository"
 )
 
@@ -59,7 +61,8 @@ func main() {
 	fmt.Println("line 3")
 	ircClient := client.NewTwitchClient(botModels[0].Username, botModels[0].OauthToken)
 	fmt.Println("line 4")
-	handler := chathandler.NewChatMessageHandler(botModels[0], botRepo, ircClient)
+	pluginManager := pluginmanager.NewChatCommandPluginManager(ircClient, botRepo)
+	handler := chathandler.NewChatMessageHandler(botModels[0], botRepo, ircClient, pluginManager)
 	fmt.Println("line 5")
 	bot := bot.NewTwitchChatBot(botModels[0], ircClient, baseRepo, handler)
 	fmt.Println("line 6")

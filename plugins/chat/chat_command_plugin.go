@@ -20,5 +20,6 @@ type ChatCommandPluginT interface {
 }
 
 type ChatCommandPluginFactoryT interface {
-	Build() ChatCommandPluginT
+	GetPluginType() string
+	BuildNewPlugin() ChatCommandPluginT
 }

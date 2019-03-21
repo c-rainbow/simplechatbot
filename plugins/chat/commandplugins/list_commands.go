@@ -70,3 +70,23 @@ func (plugin *ListCommandsPlugin) action(
 	sort.Strings(commandNames)
 	return strings.Join(commandNames, ", "), nil
 }
+
+type ListCommandsPluginFactory struct {
+	ircClient client.TwitchClientT
+	repo      repository.SingleBotRepositoryT
+}
+
+var _ chatplugins.ChatCommandPluginFactoryT = (*ListCommandsPluginFactory)(nil)
+
+func NewListCommandsPluginFactory(
+	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginFactoryT {
+	return &ListCommandsPluginFactory{ircClient: ircClient, repo: repo}
+}
+
+func (plugin *ListCommandsPluginFactory) GetPluginType() string {
+	return ListCommandsPluginType
+}
+
+func (plugin *ListCommandsPluginFactory) BuildNewPlugin() chatplugins.ChatCommandPluginT {
+	return NewListCommandsPlugin(plugin.ircClient, plugin.repo)
+}

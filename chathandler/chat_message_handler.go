@@ -2,15 +2,13 @@ package chathandler
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
-	client "github.com/c-rainbow/simplechatbot/client"
-	models "github.com/c-rainbow/simplechatbot/models"
-	repository "github.com/c-rainbow/simplechatbot/repository"
+	"github.com/c-rainbow/simplechatbot/client"
+	"github.com/c-rainbow/simplechatbot/models"
+	"github.com/c-rainbow/simplechatbot/repository"
 
-	chat_plugins "github.com/c-rainbow/simplechatbot/plugins/chat"
-	commandplugins "github.com/c-rainbow/simplechatbot/plugins/chat/commandplugins"
+	pluginmanager "github.com/c-rainbow/simplechatbot/plugins/chat/manager"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
 
@@ -19,36 +17,38 @@ type ChatMessageHandlerT interface {
 }
 
 type ChatMessageHandler struct {
-	botInfo   *models.Bot
-	repo      repository.SingleBotRepositoryT
-	ircClient client.TwitchClientT
-	chatters  map[string]bool
+	botInfo           *models.Bot
+	repo              repository.SingleBotRepositoryT
+	ircClient         client.TwitchClientT
+	chatPluginManager pluginmanager.ChatCommandPluginManagerT
 }
 
 var _ ChatMessageHandlerT = (*ChatMessageHandler)(nil)
 
 func NewChatMessageHandler(
-	botInfo *models.Bot, repo repository.SingleBotRepositoryT, ircClient client.TwitchClientT) *ChatMessageHandler {
-	return &ChatMessageHandler{botInfo: botInfo, repo: repo, ircClient: ircClient, chatters: make(map[string]bool)}
+	botInfo *models.Bot, repo repository.SingleBotRepositoryT, ircClient client.TwitchClientT,
+	chatPluginManager pluginmanager.ChatCommandPluginManagerT) *ChatMessageHandler {
+	return &ChatMessageHandler{botInfo: botInfo, repo: repo, ircClient: ircClient, chatPluginManager: chatPluginManager}
 }
 
 func (handler *ChatMessageHandler) OnNewMessage(
 	channel string, sender twitch_irc.User, message twitch_irc.Message) {
 	fmt.Println("Chat received: ", message.Raw)
-	commandName := getCommandName(message.Text)
-	commandName = strings.ToLower(commandName)
 
 	// TODO: Delete this hardcoded quit message.
+	commandName := getCommandName(message.Text)
+	commandName = strings.ToLower(commandName)
 	if commandName == "!quit" && sender.Username == "c_rainbow" {
 		handler.ircClient.Depart(channel)
 		handler.ircClient.Disconnect()
 	}
 
+	handler.chatPluginManager.ProcessChat(channel, &sender, &message)
 	// TODO: If command is retrieved, why not use this directly?
 	// Check if command with the same name exists
 	// The repository (of type SingleBotRepositoryT) ensures that the correct bot responds to the command.
 	// If this line is executed in a different bot, nil would be returned.
-	command := handler.repo.GetCommandByChannelAndName(channel, commandName)
+	/*command := handler.repo.GetCommandByChannelAndName(channel, commandName)
 	if command == nil { // Chat is not a bot command.
 		return
 	}
@@ -57,8 +57,8 @@ func (handler *ChatMessageHandler) OnNewMessage(
 
 	msgQueue <- command
 
-	var plugin chat_plugins.ChatCommandPluginT
-	// TODO: Eventually, get plugin from a factory or manager
+	var plugin pluginmanager.ChatCommandPluginT
+	// TODO: Eventually, get plugin from a factory or pluginmanager
 	switch command.PluginType {
 	// Simply responding to command, no other action
 	case commandplugins.CommandResponsePluginType:
@@ -87,7 +87,7 @@ func (handler *ChatMessageHandler) OnNewMessage(
 				log.Println("Error while running plugin for '", commandName, "': ", err.Error())
 			}
 		}()
-	}
+	}*/
 
 }
 
