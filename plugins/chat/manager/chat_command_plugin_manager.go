@@ -1,7 +1,6 @@
 package manager
 
 import (
-	"errors"
 	"log"
 	"strings"
 	"sync"
@@ -9,8 +8,8 @@ import (
 	"github.com/c-rainbow/simplechatbot/plugins/chat/games"
 
 	"github.com/c-rainbow/simplechatbot/client"
-	models "github.com/c-rainbow/simplechatbot/models"
-	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
+	"github.com/c-rainbow/simplechatbot/models"
+	"github.com/c-rainbow/simplechatbot/plugins/chat"
 	"github.com/c-rainbow/simplechatbot/plugins/chat/commandplugins"
 	"github.com/c-rainbow/simplechatbot/repository"
 	twitch_irc "github.com/gempir/go-twitch-irc"
@@ -29,7 +28,7 @@ polling from the channel until it closes.
 */
 
 type ChatCommandPluginManagerT interface {
-	RegisterPlugin(factory chatplugins.ChatCommandPluginFactoryT, count int) error
+	RegisterPlugin(factory chatplugins.ChatCommandPluginFactoryT, count int)
 	ProcessChat(channel string, sender *twitch_irc.User, message *twitch_irc.Message)
 	Close()
 }
@@ -65,14 +64,12 @@ func NewChatCommandPluginManager(
 }
 
 func (manager *ChatCommandPluginManager) RegisterPlugin(
-	factory chatplugins.ChatCommandPluginFactoryT, count int) error {
+	factory chatplugins.ChatCommandPluginFactoryT, count int) {
 	// Create job channel per plugin type
 	pluginType := factory.GetPluginType()
 	manager.channelMapMutex.Lock()
 	jobChannel, exists := manager.chanMap[pluginType]
-	if exists {
-		return errors.New("same type of plugin is already registered")
-	} else {
+	if !exists { // Means that the same type of plugin was already registered, and more is being added.
 		jobChannel = make(chan WorkItem, JobChanDefaultCapacity)
 		manager.chanMap[pluginType] = jobChannel
 	}
@@ -83,11 +80,10 @@ func (manager *ChatCommandPluginManager) RegisterPlugin(
 		plugin := factory.BuildNewPlugin()
 		go func() {
 			for workItem := range jobChannel {
-				plugin.Run(workItem.command, workItem.channel, workItem.sender, workItem.message)
+				plugin.ReactToChat(workItem.command, workItem.channel, workItem.sender, workItem.message)
 			}
 		}()
 	}
-	return nil
 }
 
 func (manager *ChatCommandPluginManager) ProcessChat(

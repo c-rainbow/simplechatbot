@@ -1,46 +1,9 @@
 package commandplugins
 
 import (
-	"strconv"
 	"strings"
-
-	models "github.com/c-rainbow/simplechatbot/models"
-	parser "github.com/c-rainbow/simplechatbot/parser"
-	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
-	twitch_irc "github.com/gempir/go-twitch-irc"
 )
 
-var ()
-
-func ParseCommand(
-	botID int64, text string, channel string, sender *twitch_irc.User,
-	message *twitch_irc.Message) (*models.Command, error) {
-
-	name, response := GetCommandNameAndResponseTextFromChat(text)
-
-	channelID, err := strconv.Atoi(message.ChannelID)
-	if err != nil {
-		return nil, err
-	}
-
-	parsedResponse := parser.ParseResponse(response)
-	responseMap := make(map[string]models.ParsedResponse)
-	responseMap[chatplugins.DefaultResponseKey] = *parsedResponse
-
-	// Parse command and response
-	command := models.Command{
-		BotID:          botID,
-		ChannelID:      int64(channelID),
-		Name:           name,
-		PluginType:     CommandResponsePluginType,
-		Permission:     chatplugins.PermissionEveryone,
-		Responses:      responseMap,
-		CooldownSecond: 5,
-		Enabled:        true,
-		Group:          "",
-	}
-	return &command, nil
-}
 
 func GetTargetCommandNameAndResponse(text string) (string, string) {
 	// TODO: This function does not acknowledge consecutive whitespaces in response text.

@@ -57,7 +57,7 @@ func (plugin *NumberGuesserPlugin) Run(
 	// Read-action-print loop
 	command, err := commandplugins.CommonRead(plugin.repo, commandName, channel, NumberGuesserPluginType, sender, message)
 	toSay, err := plugin.action(command, channel, sender, message, err)
-	err = commandplugins.CommonOutput(plugin.ircClient, channel, toSay, err)
+	err = commandplugins.SendToChatClient(plugin.ircClient, channel, toSay, err)
 	if err != nil {
 		return err
 	}

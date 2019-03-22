@@ -17,7 +17,7 @@ back to the chat with the stored data.
 */
 type ChatCommandPluginT interface {
 	GetPluginType() string
-	Run(command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message) error
+	ReactToChat(command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message)
 }
 
 type ChatCommandPluginFactoryT interface {

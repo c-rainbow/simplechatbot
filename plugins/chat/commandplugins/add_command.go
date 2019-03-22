@@ -52,14 +52,6 @@ func (plugin *AddCommandPlugin) GetPluginType() string {
 	return AddCommandPluginType
 }
 
-func (plugin *AddCommandPlugin) Run(
-	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message) error {
-
-	repo := plugin.repo
-	return CommonRun(repo, plugin.ircClient, AddCommandPluginType, repo.AddCommand, command,
-		channel, sender, message)
-}
-
 func (plugin *AddCommandPlugin) ReactToChat(
 	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message) {
 	var err error
@@ -68,7 +60,7 @@ func (plugin *AddCommandPlugin) ReactToChat(
 	targetCommandName, targetResponse := GetTargetCommandNameAndResponse(message.Text)
 
 	// TODO: Is it possible to get away from this continuous err == nil check?
-	err = CommonValidateInputs(command, channel, AddCommandPluginType, sender, message)
+	err = ValidateBasicInputs(command, channel, AddCommandPluginType, sender, message)
 	if err == nil {
 		targetCommand, err = plugin.GetTargetCommand(channel, targetCommandName)
 	}
@@ -82,13 +74,10 @@ func (plugin *AddCommandPlugin) ReactToChat(
 		err = plugin.repo.AddCommand(channel, targetCommand)
 	}
 
-	// Prepare response for the action
-	responseKey := plugin.GetResponseKey(err)
-	args := []string{targetCommandName}
-	responseText, err := CommonConvertToResponseText(command, responseKey, channel, sender, message, args)
+	responseText, err := plugin.GetResponseText(command, targetCommand, channel, sender, message, err)
 
-	CommonOutput(plugin.ircClient, channel, responseText)
-	CommonHandleError(err)
+	SendToChatClient(plugin.ircClient, channel, responseText)
+	HandleError(err)
 }
 
 func (plugin *AddCommandPlugin) GetTargetCommand(channel string, targetName string) (*models.Command, error) {
@@ -152,7 +141,7 @@ func (plugin *AddCommandPlugin) GetResponseText(
 	// Get response key, build args, get parsed response, and convert it to text
 	responseKey := plugin.GetResponseKey(err)
 	args := []string{targetCommand.Name}
-	return CommonConvertToResponseText(command, responseKey, channel, sender, message, args)
+	return ConvertToResponseText(command, responseKey, channel, sender, message, args)
 }
 
 func (plugin *AddCommandPlugin) GetResponseKey(err error) string {

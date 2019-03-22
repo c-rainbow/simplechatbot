@@ -3,29 +3,17 @@ package commandplugins
 import (
 	"log"
 
-	client "github.com/c-rainbow/simplechatbot/client"
-	models "github.com/c-rainbow/simplechatbot/models"
-	parser "github.com/c-rainbow/simplechatbot/parser"
-	plugins "github.com/c-rainbow/simplechatbot/plugins"
+	"github.com/c-rainbow/simplechatbot/client"
+	"github.com/c-rainbow/simplechatbot/models"
+	"github.com/c-rainbow/simplechatbot/parser"
+	"github.com/c-rainbow/simplechatbot/plugins"
 	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
-	repository "github.com/c-rainbow/simplechatbot/repository"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
 
-// Common read function by add/edit/delete/respond commands.
-// They are all identical except plugin type check part and actionFunction parameter
-func CommonRun(repo repository.SingleBotRepositoryT, ircClient client.TwitchClientT, expectedPluginType string,
-	actionFunction func(string, *models.Command) error, command *models.Command, channel string,
-	sender *twitch_irc.User, message *twitch_irc.Message) error {
-
-	// Read-action-print loop
-	err := CommonValidateInputs(command, channel, expectedPluginType, sender, message)
-	//return CommonOutput(ircClient, channel, toSay, err)
-	return nil
-}
-
 // Validate basic inputs. Check for existence, plugin type, and user permission of the command
-func CommonValidateInputs(command *models.Command, channel string, expectedPluginType string, sender *twitch_irc.User,
+func ValidateBasicInputs(
+	command *models.Command, channel string, expectedPluginType string, sender *twitch_irc.User,
 	message *twitch_irc.Message) error {
 	if command == nil {
 		return chatplugins.ErrCommandNotFound
@@ -45,50 +33,7 @@ func CommonValidateInputs(command *models.Command, channel string, expectedPlugi
 	return nil
 }
 
-/*
-Common action performed by AddCommand/EditCommand.
-
-In this function, returned error means internal runtime error, not user input error.
-For example, NoPermissionsError is not an error here. However, a connection error to DB
-should be returned as error in this function.
-
-Note that CommandNotFoundError is also treated as an error, because in usual workflow,
-this plugin is only called after chat message handler checks for command name.
-
-Returned string is the message to send to the output method (which is then sent to the IRC client)
-If error is not
-*/
-/*func CommonAction(
-	botInfo *models.Bot, actionFn func(string, *models.Command) error, command *models.Command, channel string,
-	sender *twitch_irc.User, message *twitch_irc.Message) (string, error) {
-
-	// Parse chat message to command struct
-	parsedCommand, err := ParseCommand(botInfo.TwitchID, message.Text, channel, sender, message)
-	if err != nil {
-		return "Failed to parse chat message to command", err
-	}
-
-	// Validate responses..
-	for _, response := range parsedCommand.Responses {
-		err = parser.Validate(&response)
-		if err != nil {
-			return "Response text cannot be validated", err
-		}
-	}
-
-	// actionFunction is One of AddCommand or EditCommand
-	err = actionFn(channel, parsedCommand)
-	if err != nil {
-		return "Error returned from actionFunction", err
-	}
-
-	args := []string{parsedCommand.Name}
-	converted, err := CommonConvertToResponseText(command, channel, sender, message, args)
-
-	return converted, nil
-}*/
-
-func CommonConvertToResponseText(
+func ConvertToResponseText(
 	command *models.Command, responseKey string, channel string, sender *twitch_irc.User, message *twitch_irc.Message,
 	args []string) (string, error) {
 
@@ -123,7 +68,7 @@ func UserHasPermission(channel string, command *models.Command, sender *twitch_i
 	}
 
 	// (2) If permission is everyone, return true
-	if command.Permission == models.PermissionEveryone {
+	if command.Permission&models.PermissionEveryone > 0 {
 		return true
 	}
 
@@ -143,14 +88,14 @@ func UserHasPermission(channel string, command *models.Command, sender *twitch_i
 }
 
 // Common function used by all chat command plugins to output to the IRC channel
-func CommonOutput(ircClient client.TwitchClientT, channel string, toSay string) {
+func SendToChatClient(ircClient client.TwitchClientT, channel string, toSay string) {
 	if toSay != "" {
 		ircClient.Say(channel, toSay)
 	}
 }
 
 // TODO: This function may be used for sending error for analysis, etc.
-func CommonHandleError(err error) {
+func HandleError(err error) {
 	// Empty for now
 	return
 }

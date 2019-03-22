@@ -13,12 +13,12 @@ const (
 	// PermissionVip int = 1 << 3
 	// Moderator only
 	PermissionModerator int = 1 << 4
-	// Streamer only
+	// Streamer only. Streamer always has permission by default.
 	PermissionStreamer int = 1 << 5
 )
 
 var (
-	// Default response key in resopnse map
+	// Default response keys in response map
 	DefaultResponseKey        = "DEFAULT"
 	DefaultFailureResponseKey = "FAILURE"
 )
