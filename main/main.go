@@ -76,7 +76,7 @@ func main() {
 func mainAddCommand() {
 	baseRepo := repository.NewBaseRepository()
 
-	responseMap := make(map[string]parser.ParsedResponse)
+	responseMap := make(map[string]models.ParsedResponse)
 	response := parser.ParseResponse("Hello $(user)")
 	responseMap[""] = *response
 	channelName := localrun.DefaultChannelUsername

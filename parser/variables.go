@@ -17,10 +17,11 @@ const (
 	SimpleType             = "simple"             // No external API call
 	OverwatchAPIType       = "overwatchAPI"       // Overwatch API call
 	LeagueOfLegendsAPIType = "LeagueOfLegendsAPI" // Riot LoL API call
+	ArgumentType           = "argument"           // Customer Argument, arg0, arg1, arg2..
 )
 
 // Variable names
-var (
+const (
 	// Variables whose info can be retrieved from chat
 	User          = "user"
 	UserID        = "user_id"
@@ -52,6 +53,14 @@ var (
 	// Variables which need other API call to get values
 	Overwatch       = "overwatch"
 	LeagueOfLegends = "league_of_legends"
+
+	// Custom arguments
+	Arg0 = "arg0"
+	Arg1 = "arg1"
+	Arg2 = "arg2"
+	Arg3 = "arg3"
+	Arg4 = "arg4"
+	Arg5 = "arg5"
 )
 
 // VariableMap all variables that can be used for bot
@@ -235,5 +244,45 @@ var VariableMap = map[string]Variable{
 		Type:        LeagueOfLegendsAPIType,
 		Description: "Current League of Legends tier",
 		Enabled:     false,
+	},
+
+	/*
+		$(argN): N'th argument (note that its index is 0-based). Arg0 is the first, Arg1 second, and so on..
+	*/
+	Arg0: Variable{
+		Name:        Arg0,
+		Type:        ArgumentType,
+		Description: "Argument 0",
+		Enabled:     true,
+	},
+	Arg1: Variable{
+		Name:        Arg1,
+		Type:        ArgumentType,
+		Description: "Argument 1",
+		Enabled:     true,
+	},
+	Arg2: Variable{
+		Name:        Arg2,
+		Type:        ArgumentType,
+		Description: "Argument 2",
+		Enabled:     true,
+	},
+	Arg3: Variable{
+		Name:        Arg3,
+		Type:        ArgumentType,
+		Description: "Argument 3",
+		Enabled:     true,
+	},
+	Arg4: Variable{
+		Name:        Arg4,
+		Type:        ArgumentType,
+		Description: "Argument 4",
+		Enabled:     true,
+	},
+	Arg5: Variable{
+		Name:        Arg5,
+		Type:        ArgumentType,
+		Description: "Argument 5",
+		Enabled:     true,
 	},
 }

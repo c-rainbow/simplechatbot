@@ -1,6 +1,10 @@
 package parser
 
-import "strings"
+import (
+	"strings"
+
+	models "github.com/c-rainbow/simplechatbot/models"
+)
 
 /*
 
@@ -55,8 +59,8 @@ else:
 finally:
 	Create remaining unprocessed text as a token, add to token list.
 */
-func ParseResponse(response string) *ParsedResponse {
-	parsed := &ParsedResponse{}
+func ParseResponse(response string) *models.ParsedResponse {
+	parsed := &models.ParsedResponse{}
 	parsed.RawText = response
 
 	// Working with multi-byte string in Go is painful. Let's just use runes.
@@ -85,22 +89,22 @@ func ParseResponse(response string) *ParsedResponse {
 	return parsed
 }
 
-func appendToken(tokens *[]Token, runes []rune, startIndex int, endIndex int) {
+func appendToken(tokens *[]models.Token, runes []rune, startIndex int, endIndex int) {
 	if startIndex < endIndex {
-		*tokens = append(*tokens, Token{
+		*tokens = append(*tokens, models.Token{
 			RawText:   string(runes[startIndex:endIndex]),
-			TokenType: TextTokenType,
+			TokenType: models.TextTokenType,
 		})
 	}
 }
 
 // Returned int is start index of the new token (first index after the variable token)
 // It is assumed that the runes from fromIndex starts with startVariable "$(".
-func parseVariable(runes []rune, fromIndex int) (Token, int) {
+func parseVariable(runes []rune, fromIndex int) (models.Token, int) {
 	startIndex := fromIndex + len(startVarRunes)
 	currentIndex := startIndex
 
-	token := Token{TokenType: VariableTokenType}
+	token := models.Token{TokenType: models.VariableTokenType}
 	// hasNestedVariable := false
 	for currentIndex < len(runes) && !isVariableEndingTag(runes, currentIndex) {
 		if isVariableStartingTag(runes, currentIndex) {
@@ -137,7 +141,7 @@ func parseVariable(runes []rune, fromIndex int) (Token, int) {
 }
 
 // GetVariableName returns
-func GetVariableName(token *Token) string {
+func GetVariableName(token *models.Token) string {
 	// Variable token with empty body "$()"
 	if len(token.Arguments) == 0 {
 		return ""
@@ -146,7 +150,7 @@ func GetVariableName(token *Token) string {
 	nameArg := token.Arguments[0]
 	// The first argument of the variable token should always be text.
 	// TokenType not being TextTokenType means nested variable in form of $($(a) b)
-	if nameArg.TokenType != TextTokenType {
+	if nameArg.TokenType != models.TextTokenType {
 		return ""
 	}
 

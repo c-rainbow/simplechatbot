@@ -1,8 +1,6 @@
 package commandplugins
 
 import (
-	"errors"
-
 	"github.com/c-rainbow/simplechatbot/client"
 	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
 	"github.com/c-rainbow/simplechatbot/repository"
@@ -16,10 +14,7 @@ const (
 	CommandResponsePluginType = "CommandResponsePluginType"
 )
 
-var (
-	CommandNotFoundError   = errors.New("Command with the name is not found")
-	NoDefaultResponseError = errors.New("Default response is not found for the command")
-)
+var ()
 
 // Plugin that responds to user-defined chat commands.
 type CommandResponsePlugin struct {
@@ -41,7 +36,7 @@ func (plugin *CommandResponsePlugin) GetPluginType() string {
 func (plugin *CommandResponsePlugin) Run(
 	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message) error {
 	// Read-action-print loop
-	command, err := CommonRead(plugin.repo, command, channel, CommandResponsePluginType, sender, message)
+	err := CommonValidateInputs(command, channel, CommandResponsePluginType, sender, message)
 	toSay, err := plugin.action(command, channel, sender, message, err)
 	err = CommonOutput(plugin.ircClient, channel, toSay, err)
 	if err != nil {

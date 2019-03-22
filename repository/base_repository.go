@@ -37,8 +37,8 @@ type BaseRepositoryT interface {
 	CreateNewBot(botInfo *models.Bot) error
 	AddBotToChannel(botInfo *models.Bot, channelToAdd *models.Channel) error
 	AddCommand(channel string, commandToAdd *models.Command) error
-	EditCommand(channel string, commandToAdd *models.Command) error
-	DeleteCommand(channel string, commandToAdd *models.Command) error
+	EditCommand(channel string, commandToEdit *models.Command) error
+	DeleteCommand(channel string, commandToDelete *models.Command) error
 	ListCommands(channel string) ([]*models.Command, error)
 }
 

@@ -54,3 +54,36 @@ func (plugin *EditCommandPluginFactory) GetPluginType() string {
 func (plugin *EditCommandPluginFactory) BuildNewPlugin() chatplugins.ChatCommandPluginT {
 	return NewEditCommandPlugin(plugin.ircClient, plugin.repo)
 }
+
+func (plugin *EditCommandPlugin) GetResponseKey(err error) string {
+	// Normal case.
+	if err == nil {
+		return models.DefaultResponseKey
+	}
+
+	/*
+		Failure case.
+		Design decision: We can return different messages per error type in two ways
+		(1) switch statement with each known error cases, manually assigning response key, like the code below
+		(2) Each error has unique error type string, and we use it as response key.
+			For example, parsedResponse, exists := command.Responsees[NoPermissionError.Key()]
+
+		Design 1 was chosen because mapping between error type and error message is not necessarily 1-to-1.
+		Multiple error types can produce the same error message. With design 1, it's also more obvious in the code
+		to see which error is connected to which message key.
+	*/
+	switch err {
+	case chatplugins.ErrCommandNotFound: // Command name is not found. Likely syncronization issue
+		fallthrough
+	case chatplugins.ErrNoPermission: // User has no permission
+		fallthrough
+	case chatplugins.ErrNotEnoughArguments: // Arguments
+		fallthrough
+	case chatplugins.ErrTargetCommandAlreadyExists: // Target command already exists and cannot be added
+		fallthrough
+	case chatplugins.ErrTargetCommandNotFound: // This is not relevant to AddCommand
+		fallthrough
+	default:
+		return models.DefaultFailureResponseKey
+	}
+}

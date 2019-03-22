@@ -2,8 +2,10 @@ package parser
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 
+	models "github.com/c-rainbow/simplechatbot/models"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
 
@@ -14,10 +16,12 @@ var (
 )
 
 // It is assumed that the response is already validated
-func ConvertResponse(response *ParsedResponse, channel string, sender *twitch_irc.User, message *twitch_irc.Message) (string, error) {
+func ConvertResponse(
+	response *models.ParsedResponse, channel string, sender *twitch_irc.User, message *twitch_irc.Message,
+	args []string) (string, error) {
 	var builder strings.Builder
 	for _, token := range response.Tokens {
-		if token.TokenType == TextTokenType {
+		if token.TokenType == models.TextTokenType {
 			builder.WriteString(token.RawText)
 		} else {
 			var converted string
@@ -28,9 +32,9 @@ func ConvertResponse(response *ParsedResponse, channel string, sender *twitch_ir
 			switch variableType {
 			case ChatType:
 				converted, err = ConvertChatVariables(&token, channel, sender, message)
-				// "break" means break from the loop
+			case ArgumentType:
+				converted, err = ConvertArgumentVariables(&token, args)
 			case StreamAPIType:
-				// Go doesn't automatically move to the next case unless the case is marked as "fallthrough"
 				fallthrough
 			case UserAPIType:
 				fallthrough
@@ -54,10 +58,11 @@ func ConvertResponse(response *ParsedResponse, channel string, sender *twitch_ir
 	return builder.String(), nil
 }
 
-func ConvertChatVariables(token *Token, channel string, sender *twitch_irc.User, message *twitch_irc.Message) (string, error) {
+func ConvertChatVariables(
+	token *models.Token, channel string, sender *twitch_irc.User, message *twitch_irc.Message) (string, error) {
 	// This check is here only for robustness.
 	// In normal workflow, this if-statement will always be skipped.
-	if token.TokenType != VariableTokenType {
+	if token.TokenType != models.VariableTokenType {
 		return "", NotVariableTypeError
 	}
 
@@ -77,4 +82,27 @@ func ConvertChatVariables(token *Token, channel string, sender *twitch_irc.User,
 	default:
 		return "", InvalidVariableNameError
 	}
+}
+
+func ConvertArgumentVariables(token *models.Token, args []string) (string, error) {
+	if token.TokenType != models.VariableTokenType {
+		return "", NotVariableTypeError
+	}
+
+	switch token.VariableName {
+	// This case should be updated if more argument indexes are added
+	case Arg0, Arg1, Arg2, Arg3, Arg4, Arg5:
+		return valueAtIndex(args, token.VariableName)
+	default:
+		return "", InvalidVariableNameError
+	}
+}
+
+// This function assumes that the variable name is form of "argN", where N >= 0
+func valueAtIndex(args []string, vName string) (string, error) {
+	index, err := strconv.Atoi(vName[3:])
+	if err == nil && 0 <= index && index < len(args) {
+		return args[index], nil
+	}
+	return "", InvalidVariableNameError
 }

@@ -114,7 +114,7 @@ func RecreateChannelsTable() error {
 func buildCommand(
 	botID int64, channelID int64, name string, pluginType string, defaultResponse string) *models.Command {
 
-	responseMap := make(map[string]parser.ParsedResponse)
+	responseMap := make(map[string]models.ParsedResponse)
 	responseMap[chatplugins.DefaultResponseKey] = *parser.ParseResponse(defaultResponse)
 
 	return &models.Command{
@@ -124,6 +124,7 @@ func buildCommand(
 		PluginType:     pluginType,
 		Responses:      responseMap,
 		CooldownSecond: 5,
+		Permission:     chatplugins.PermissionEveryone,
 		Enabled:        true,
 		Group:          "",
 	}

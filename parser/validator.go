@@ -3,6 +3,8 @@ package parser
 import (
 	"errors"
 	"strings"
+
+	models "github.com/c-rainbow/simplechatbot/models"
 )
 
 var (
@@ -25,7 +27,7 @@ var NestableVariableNames = []string{
 }
 
 // Returns nil if there is no error
-func Validate(response *ParsedResponse) error {
+func Validate(response *models.ParsedResponse) error {
 	if response.RawText == "" {
 		return EmptyResponseError
 	}
@@ -51,9 +53,9 @@ Validation logic:
 	iii) If nested, one of nestables
   [2] Valid number of arguments (TODO)
 */
-func ValidateToken(token *Token, nested bool) error {
+func ValidateToken(token *models.Token, nested bool) error {
 	// For now, TextTypeToken is always valid as long as it's not empty.
-	if token.TokenType == TextTokenType {
+	if token.TokenType == models.TextTokenType {
 		if token.RawText == "" {
 			return EmptyTokenError
 		}

@@ -40,7 +40,7 @@ func AddNewCommand() {
 func BuildCommand(
 	botID int64, channelID int64, name string, pluginType string, defaultResponse string) *models.Command {
 
-	responseMap := make(map[string]parser.ParsedResponse)
+	responseMap := make(map[string]models.ParsedResponse)
 	responseMap[chatplugins.DefaultResponseKey] = *parser.ParseResponse(defaultResponse)
 
 	return &models.Command{
