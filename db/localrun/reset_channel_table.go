@@ -14,6 +14,7 @@ import (
 	"github.com/c-rainbow/simplechatbot/parser"
 	"github.com/c-rainbow/simplechatbot/plugins/chat/commandplugins"
 	"github.com/c-rainbow/simplechatbot/plugins/chat/games"
+	"github.com/c-rainbow/simplechatbot/plugins/chat/selfban"
 	"github.com/c-rainbow/simplechatbot/repository"
 )
 
@@ -68,6 +69,7 @@ func ResetChannelsTable() {
 		"명령어 모음: $(arg0)")
 
 	AddCommandToMap(commandMap, botID, channelID, "!숫자", games.NumberGuesserPluginType, "")
+	AddCommandToMap(commandMap, botID, channelID, "!셀프밴", selfban.SelfBanPluginType, "@$(user) 님 밴")
 
 	err = repo.CreateNewChannel(chanInfo)
 	if err != nil {

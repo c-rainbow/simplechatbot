@@ -6,10 +6,11 @@ import (
 	"sync"
 
 	"github.com/c-rainbow/simplechatbot/plugins/chat/games"
+	"github.com/c-rainbow/simplechatbot/plugins/chat/selfban"
 
 	"github.com/c-rainbow/simplechatbot/client"
 	"github.com/c-rainbow/simplechatbot/models"
-	"github.com/c-rainbow/simplechatbot/plugins/chat"
+	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
 	"github.com/c-rainbow/simplechatbot/plugins/chat/commandplugins"
 	"github.com/c-rainbow/simplechatbot/repository"
 	twitch_irc "github.com/gempir/go-twitch-irc"
@@ -59,6 +60,7 @@ func NewChatCommandPluginManager(
 	manager.RegisterPlugin(commandplugins.NewListCommandsPluginFactory(ircClient, repo), 1)
 	manager.RegisterPlugin(commandplugins.NewCommandResponsePluginFactory(ircClient, repo), 1)
 	manager.RegisterPlugin(games.NewNumberGuesserPluginFactory(ircClient, repo), 1)
+	manager.RegisterPlugin(selfban.NewSelfBanPluginFactory(ircClient), 1)
 
 	return &manager
 }
