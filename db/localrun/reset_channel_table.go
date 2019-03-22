@@ -12,7 +12,6 @@ import (
 
 	"github.com/c-rainbow/simplechatbot/models"
 	"github.com/c-rainbow/simplechatbot/parser"
-	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
 	"github.com/c-rainbow/simplechatbot/plugins/chat/commandplugins"
 	"github.com/c-rainbow/simplechatbot/plugins/chat/games"
 	"github.com/c-rainbow/simplechatbot/repository"
@@ -64,9 +63,9 @@ func ResetChannelsTable() {
 
 	// Commands to list available commands
 	AddCommandToMap(commandMap, botID, channelID, "!commands", commandplugins.ListCommandsPluginType,
-		"@$(user) Commands are not available")
+		"The list of commands are: $(arg0)")
 	AddCommandToMap(commandMap, botID, channelID, "!명령어", commandplugins.ListCommandsPluginType,
-		"@$(user) !명령어 는 아직 지원되지 않습니다")
+		"명령어 모음: $(arg0)")
 
 	AddCommandToMap(commandMap, botID, channelID, "!숫자", games.NumberGuesserPluginType, "")
 
@@ -115,7 +114,7 @@ func buildCommand(
 	botID int64, channelID int64, name string, pluginType string, defaultResponse string) *models.Command {
 
 	responseMap := make(map[string]models.ParsedResponse)
-	responseMap[chatplugins.DefaultResponseKey] = *parser.ParseResponse(defaultResponse)
+	responseMap[models.DefaultResponseKey] = *parser.ParseResponse(defaultResponse)
 
 	return &models.Command{
 		BotID:          botID,
@@ -124,7 +123,7 @@ func buildCommand(
 		PluginType:     pluginType,
 		Responses:      responseMap,
 		CooldownSecond: 5,
-		Permission:     chatplugins.PermissionEveryone,
+		Permission:     models.PermissionEveryone,
 		Enabled:        true,
 		Group:          "",
 	}

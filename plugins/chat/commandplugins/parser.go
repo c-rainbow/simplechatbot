@@ -4,7 +4,6 @@ import (
 	"strings"
 )
 
-
 func GetTargetCommandNameAndResponse(text string) (string, string) {
 	// TODO: This function does not acknowledge consecutive whitespaces in response text.
 	// For example, if user types "!addcom !hello Welcome  \t  $(user)     here!", then
@@ -12,13 +11,13 @@ func GetTargetCommandNameAndResponse(text string) (string, string) {
 	// between words.
 	fields := strings.Fields(text)
 
-	// For DeleteCommand plugin
-	if len(fields) == 2 {
+	switch len(fields) {
+	case 1:
+		return "", ""
+	case 2:
 		return fields[1], ""
+	default:
+		response := strings.Join(fields[2:], " ")
+		return fields[1], response
 	}
-
-	// For AddCommand/EditCommand plugin
-	response := strings.Join(fields[2:], " ")
-	return fields[1], response
-
 }

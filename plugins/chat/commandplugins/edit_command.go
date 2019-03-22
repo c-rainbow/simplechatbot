@@ -8,6 +8,7 @@ import (
 	models "github.com/c-rainbow/simplechatbot/models"
 	"github.com/c-rainbow/simplechatbot/parser"
 	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
+	"github.com/c-rainbow/simplechatbot/plugins/chat/common"
 	"github.com/c-rainbow/simplechatbot/repository"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
@@ -15,7 +16,6 @@ import (
 const (
 	EditCommandPluginType = "EditCommandPluginType"
 )
-
 
 type EditCommandPluginFactory struct {
 	ircClient client.TwitchClientT
@@ -36,7 +36,6 @@ func (plugin *EditCommandPluginFactory) GetPluginType() string {
 func (plugin *EditCommandPluginFactory) BuildNewPlugin() chatplugins.ChatCommandPluginT {
 	return NewEditCommandPlugin(plugin.ircClient, plugin.repo)
 }
-
 
 type EditCommandPlugin struct {
 	ircClient client.TwitchClientT
@@ -62,7 +61,7 @@ func (plugin *EditCommandPlugin) ReactToChat(
 	targetCommandName, targetResponse := GetTargetCommandNameAndResponse(message.Text)
 
 	// TODO: Is it possible to get away from this continuous err == nil check?
-	err = ValidateBasicInputs(command, channel, EditCommandPluginType, sender, message)
+	err = common.ValidateBasicInputs(command, channel, EditCommandPluginType, sender, message)
 	if err == nil {
 		targetCommand, err = plugin.GetTargetCommand(channel, targetCommandName)
 	}
@@ -75,8 +74,8 @@ func (plugin *EditCommandPlugin) ReactToChat(
 
 	responseText, err := plugin.GetResponseText(command, targetCommand, channel, sender, message, err)
 
-	SendToChatClient(plugin.ircClient, channel, responseText)
-	HandleError(err)
+	common.SendToChatClient(plugin.ircClient, channel, responseText)
+	common.HandleError(err)
 }
 
 func (plugin *EditCommandPlugin) GetTargetCommand(channel string, targetName string) (*models.Command, error) {
@@ -140,7 +139,7 @@ func (plugin *EditCommandPlugin) GetResponseText(
 	// Get response key, build args, get parsed response, and convert it to text
 	responseKey := plugin.GetResponseKey(err)
 	args := []string{targetCommand.Name}
-	return ConvertToResponseText(command, responseKey, channel, sender, message, args)
+	return common.ConvertToResponseText(command, responseKey, channel, sender, message, args)
 }
 
 func (plugin *EditCommandPlugin) GetResponseKey(err error) string {

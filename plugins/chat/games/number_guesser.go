@@ -8,8 +8,9 @@ import (
 
 	"github.com/c-rainbow/simplechatbot/client"
 	"github.com/c-rainbow/simplechatbot/models"
+	"github.com/c-rainbow/simplechatbot/parser"
 	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
-	"github.com/c-rainbow/simplechatbot/plugins/chat/commandplugins"
+	"github.com/c-rainbow/simplechatbot/plugins/chat/common"
 	"github.com/c-rainbow/simplechatbot/repository"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
@@ -28,91 +29,24 @@ During game, bot responses with one of "higher than [number]", "smaller than [nu
 const (
 	NumberGuesserPluginType = "NumberGuesserPluginType"
 	MaxNumber               = 100
+	StartCommand            = "시작"
+	EndCommand              = "종료"
 	StatusRunning           = 1
 	StatusStopped           = 0
 )
 
-// Plugin that responds to user-defined chat commands.
-type NumberGuesserPlugin struct {
-	ircClient client.TwitchClientT
-	repo      repository.SingleBotRepositoryT
-	mutex     sync.Mutex
-	status    int
-	answer    int
-}
-
-var _ chatplugins.ChatCommandPluginT = (*NumberGuesserPlugin)(nil)
-
-func NewNumberGuesserPlugin(
-	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginT {
-	return &NumberGuesserPlugin{ircClient: ircClient, repo: repo, mutex: sync.Mutex{}}
-}
-
-func (plugin *NumberGuesserPlugin) GetPluginType() string {
-	return NumberGuesserPluginType
-}
-
-func (plugin *NumberGuesserPlugin) Run(
-	commandName string, channel string, sender *twitch_irc.User, message *twitch_irc.Message) error {
-	// Read-action-print loop
-	command, err := commandplugins.CommonRead(plugin.repo, commandName, channel, NumberGuesserPluginType, sender, message)
-	toSay, err := plugin.action(command, channel, sender, message, err)
-	err = commandplugins.SendToChatClient(plugin.ircClient, channel, toSay, err)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// In this function, returned error means internal runtime error, not user input error.
-// For example, NoPermissionsError is not an error here. However, a connection error to DB
-// should be returned as error in this function.
-//
-// Note that CommandNotFoundError is also treated as an error, because in usual workflow,
-// this plugin is only called after chat message handler checks for command name.
-func (plugin *NumberGuesserPlugin) action(
-	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message,
-	err error) (string, error) {
-
-	fields := strings.Fields(message.Text)
-
-	toSay := ""
-
-	argument := fields[1]
-	plugin.mutex.Lock()
-	defer plugin.mutex.Unlock()
-
-	switch argument {
-	case "시작":
-		if plugin.status == StatusStopped {
-			plugin.status = StatusRunning
-			plugin.answer = rand.Intn(MaxNumber) + 1
-			toSay = "1부터 " + strconv.Itoa(MaxNumber) + " 사이 제가 생각하는 숫자를 맞춰보세요"
-		}
-	case "종료":
-		if plugin.status == StatusRunning {
-			plugin.status = StatusStopped
-			toSay = "게임을 종료합니다"
-		}
-	default:
-		if plugin.status == StatusRunning {
-			num, err := strconv.Atoi(argument)
-			// non-nil err means invalid input. Ignore.
-			if err == nil && 1 <= num && num <= MaxNumber {
-				numStr := strconv.Itoa(num)
-				if num < plugin.answer {
-					toSay = numStr + " 보다 큽니다"
-				} else if num > plugin.answer {
-					toSay = numStr + "보다 작습니다"
-				} else {
-					toSay = "@" + sender.DisplayName + " 님 정답! 정답은 " + numStr + ". 게임을 종료합니다"
-					plugin.status = StatusStopped
-				}
-			}
-		}
-	}
-	return toSay, nil
-}
+var (
+	// Below are bot's response messages in various situations
+	MessageUsageBeforeGame    = "채팅창에 '!숫자 시작' 이라고 입력하여 게임을 시작할 수 있습니다"
+	MessageUsageInGame        = "채팅창에 '!숫자 [숫자]' 라고 입력하여 1부터 $(arg1) 사이 제가 생각하는 숫자를 맞춰보세요"
+	MessageGameStarted        = "게임이 시작되었습니다. " + MessageUsageInGame
+	MessageGameAlreadyStarted = "이미 " + MessageGameStarted
+	MessageLowerThanThat      = "$(arg0) 보다 작습니다"
+	MessageHigherThanThat     = "$(arg0) 보다 큽니다"
+	MessageCorrect            = "$(user)님 정답! 정답은 $(arg0)이었습니다. 게임을 종료합니다"
+	MessageGameEnded          = "게임을 종료합니다."
+	MessageGameAlreadyEnded   = "게임이 진행중이 아닙니다. " + MessageUsageBeforeGame
+)
 
 type NumberGuesserPluginFactory struct {
 	ircClient client.TwitchClientT
@@ -132,4 +66,133 @@ func (plugin *NumberGuesserPluginFactory) GetPluginType() string {
 
 func (plugin *NumberGuesserPluginFactory) BuildNewPlugin() chatplugins.ChatCommandPluginT {
 	return NewNumberGuesserPlugin(plugin.ircClient, plugin.repo)
+}
+
+// Plugin that responds to user-defined chat commands.
+type NumberGuesserPlugin struct {
+	ircClient  client.TwitchClientT
+	repo       repository.SingleBotRepositoryT
+	mutex      sync.Mutex
+	status     int
+	answer     int
+	currentMax int
+}
+
+var _ chatplugins.ChatCommandPluginT = (*NumberGuesserPlugin)(nil)
+
+func NewNumberGuesserPlugin(
+	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginT {
+	return &NumberGuesserPlugin{ircClient: ircClient, repo: repo, mutex: sync.Mutex{}}
+}
+
+func (plugin *NumberGuesserPlugin) GetPluginType() string {
+	return NumberGuesserPluginType
+}
+
+func (plugin *NumberGuesserPlugin) ReactToChat(
+	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message) {
+	responseText := ""
+	err := common.ValidateBasicInputs(command, channel, NumberGuesserPluginType, sender, message)
+	if err == nil {
+		args := plugin.ParseArguments(message.Text)
+
+		response := plugin.ProcessArgument(args, sender)
+		// Parse the response message from above
+		parsedResponse := parser.ParseResponse(response)
+		responseArgs := []string{args[0], strconv.Itoa(plugin.currentMax)}
+		responseText, err = parser.ConvertResponse(parsedResponse, channel, sender, message, responseArgs)
+	}
+
+	common.SendToChatClient(plugin.ircClient, channel, responseText)
+	common.HandleError(err)
+
+}
+
+func (plugin *NumberGuesserPlugin) ParseArguments(text string) []string {
+	fields := strings.Fields(text)
+
+	switch len(fields) {
+	case 0, 1:
+		return []string{"", ""}
+	case 2:
+		return []string{fields[1], ""}
+	default:
+		return fields[1:]
+	}
+}
+
+func (plugin *NumberGuesserPlugin) ProcessArgument(args []string, sender *twitch_irc.User) string {
+	plugin.mutex.Lock()
+	defer plugin.mutex.Unlock()
+
+	if plugin.status == StatusRunning {
+		return plugin.ProcessInGameCommands(args)
+	} else {
+		return plugin.ProcessNotInGameCommands(args)
+	}
+}
+
+// What to do while game is being played
+func (plugin *NumberGuesserPlugin) ProcessInGameCommands(args []string) string {
+	mainArg := args[0]
+	toSay := ""
+
+	switch mainArg {
+
+	// Duplicate start command. Show usage and ignore
+	case StartCommand:
+		toSay = MessageGameAlreadyStarted
+
+	// End command. End the game.
+	case EndCommand:
+		toSay = MessageGameEnded
+		plugin.status = StatusStopped
+
+	// Hopefully the chatter entered a valid number
+	default:
+		// Parse the number
+		num, err := strconv.Atoi(mainArg)
+		if err == nil && 1 <= num && num <= plugin.currentMax {
+			if num < plugin.answer { // answer higher than number
+				toSay = MessageHigherThanThat
+			} else if num > plugin.answer { // answer lower than number
+				toSay = MessageLowerThanThat
+			} else { // correct!
+				toSay = MessageCorrect
+				plugin.status = StatusStopped
+			}
+		} else {
+			// Invalid number. Just show usage
+			toSay = MessageUsageInGame
+		}
+	}
+	return toSay
+}
+
+// What to do when game is not being played
+func (plugin *NumberGuesserPlugin) ProcessNotInGameCommands(args []string) string {
+	mainArg := args[0]
+	toSay := ""
+
+	switch mainArg {
+
+	// Start the game.
+	case StartCommand:
+		toSay = MessageGameStarted
+		// Check if user provided custom max number
+		maxNum := MaxNumber
+		maxNum, err := strconv.Atoi(args[1])
+		if err != nil {
+			maxNum = MaxNumber
+		}
+		// Set values for new game
+		plugin.currentMax = maxNum
+		plugin.answer = rand.Intn(maxNum) + 1
+		plugin.status = StatusRunning
+
+	// While not in game, anything other than start command is invalid.
+	default:
+		toSay = MessageGameAlreadyEnded
+	}
+	return toSay
 }

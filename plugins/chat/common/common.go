@@ -1,4 +1,4 @@
-package commandplugins
+package common
 
 import (
 	"log"
@@ -96,6 +96,9 @@ func SendToChatClient(ircClient client.TwitchClientT, channel string, toSay stri
 
 // TODO: This function may be used for sending error for analysis, etc.
 func HandleError(err error) {
+	if err != nil {
+		log.Println("Some Error: ", err.Error())
+	}
 	// Empty for now
 	return
 }

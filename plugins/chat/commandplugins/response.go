@@ -2,7 +2,8 @@ package commandplugins
 
 import (
 	"github.com/c-rainbow/simplechatbot/client"
-	"github.com/c-rainbow/simplechatbot/plugins/chat"
+	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
+	"github.com/c-rainbow/simplechatbot/plugins/chat/common"
 	"github.com/c-rainbow/simplechatbot/repository"
 
 	"github.com/c-rainbow/simplechatbot/models"
@@ -52,13 +53,13 @@ func (plugin *CommandResponsePlugin) GetPluginType() string {
 
 func (plugin *CommandResponsePlugin) ReactToChat(
 	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message) {
-		// Basic validations
-	err := ValidateBasicInputs(command, channel, CommandResponsePluginType, sender, message)
+	// Basic validations
+	err := common.ValidateBasicInputs(command, channel, CommandResponsePluginType, sender, message)
 
 	responseText, err := plugin.GetResponseText(command, channel, sender, message, err)
 
-	SendToChatClient(plugin.ircClient, channel, responseText)
-	HandleError(err)
+	common.SendToChatClient(plugin.ircClient, channel, responseText)
+	common.HandleError(err)
 }
 
 func (plugin *CommandResponsePlugin) GetResponseText(
@@ -67,7 +68,7 @@ func (plugin *CommandResponsePlugin) GetResponseText(
 	// Get response key, build args, get parsed response, and convert it to text
 	responseKey := plugin.GetResponseKey(err)
 	args := []string{}
-	return ConvertToResponseText(command, responseKey, channel, sender, message, args)
+	return common.ConvertToResponseText(command, responseKey, channel, sender, message, args)
 }
 
 func (plugin *CommandResponsePlugin) GetResponseKey(err error) string {

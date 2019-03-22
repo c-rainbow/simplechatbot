@@ -1,4 +1,4 @@
-package commandplugins
+package common
 
 import (
 	"testing"
@@ -7,9 +7,7 @@ import (
 	parser "github.com/c-rainbow/simplechatbot/parser"
 	plugins "github.com/c-rainbow/simplechatbot/plugins"
 	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
-	mock_repository "github.com/c-rainbow/simplechatbot/repository/mock"
 	twitch_irc "github.com/gempir/go-twitch-irc"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -156,12 +154,4 @@ func TestUserPermissionsModerator(t *testing.T) {
 	message.Tags["subscriber"] = "1"
 	assert.False(t, UserHasPermission(testChannel2, &command, &testSender, &message))
 
-}
-
-func Testddddd(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockRepo := mock_repository.NewMockSingleBotRepositoryT(ctrl)
-	mockRepo.EXPECT().GetCommandByChannelAndName(gomock.Eq(testChannel1), gomock.Eq(testCommandName)).
-		Return(nil).AnyTimes()
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/c-rainbow/simplechatbot/client"
 	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
+	"github.com/c-rainbow/simplechatbot/plugins/chat/common"
 	"github.com/c-rainbow/simplechatbot/repository"
 
 	models "github.com/c-rainbow/simplechatbot/models"
@@ -56,15 +57,15 @@ func (plugin *ListCommandsPlugin) GetPluginType() string {
 func (plugin *ListCommandsPlugin) ReactToChat(
 	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message) {
 	var targetCommands []*models.Command
-	err := ValidateBasicInputs(command, channel, ListCommandsPluginType, sender, message)
+	err := common.ValidateBasicInputs(command, channel, ListCommandsPluginType, sender, message)
 	if err == nil {
 		targetCommands, err = plugin.repo.ListCommands(channel)
 	}
 
 	responseText, err := plugin.GetResponseText(command, targetCommands, channel, sender, message, err)
 
-	SendToChatClient(plugin.ircClient, channel, responseText)
-	HandleError(err)
+	common.SendToChatClient(plugin.ircClient, channel, responseText)
+	common.HandleError(err)
 }
 
 // Get response text of the executed command, based on the errors and progress so far.
@@ -74,7 +75,7 @@ func (plugin *ListCommandsPlugin) GetResponseText(
 	// Get response key, build args, get parsed response, and convert it to text
 	responseKey := plugin.GetResponseKey(err)
 	args := []string{plugin.GetSortedCommandNames(targetCommands)}
-	return ConvertToResponseText(command, responseKey, channel, sender, message, args)
+	return common.ConvertToResponseText(command, responseKey, channel, sender, message, args)
 }
 
 func (plugin *ListCommandsPlugin) GetResponseKey(err error) string {

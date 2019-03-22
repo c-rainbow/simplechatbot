@@ -3,6 +3,7 @@ package parser
 import (
 	"testing"
 
+	models "github.com/c-rainbow/simplechatbot/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,9 +21,9 @@ func TestNoVariableResponseOneWord(t *testing.T) {
 
 	assert.Equal(t, "hello", response.RawText)
 	assert.Equal(t, 1, len(response.Tokens))
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "hello",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[0])
 }
 
@@ -32,9 +33,9 @@ func TestNoVariableResponseWithSpaces(t *testing.T) {
 
 	assert.Equal(t, "this is response text", response.RawText)
 	assert.Equal(t, 1, len(response.Tokens))
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "this is response text",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[0])
 }
 
@@ -44,9 +45,9 @@ func TestNoVariableResponseWithSpecialCharacters(t *testing.T) {
 
 	assert.Equal(t, "!@#special $% ^&*()", response.RawText)
 	assert.Equal(t, 1, len(response.Tokens))
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "!@#special $% ^&*()",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[0])
 }
 
@@ -56,14 +57,14 @@ func TestVariableEntireResponse(t *testing.T) {
 
 	assert.Equal(t, "$(user)", response.RawText)
 	assert.Equal(t, 1, len(response.Tokens))
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(user)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "user",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "user",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, response.Tokens[0])
@@ -74,14 +75,14 @@ func TestVariableEntireResponseWithSpaceInName(t *testing.T) {
 
 	assert.Equal(t, "$(  user   )", response.RawText)
 	assert.Equal(t, 1, len(response.Tokens))
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(  user   )",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "user",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "  user   ",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, response.Tokens[0])
@@ -93,26 +94,26 @@ func TestVariablePartialResponse(t *testing.T) {
 	assert.Equal(t, "hi $(user) hello", response.RawText)
 	assert.Equal(t, 3, len(response.Tokens))
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "hi ",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[0])
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(user)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "user",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "user",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, response.Tokens[1])
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   " hello",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[2])
 }
 
@@ -123,19 +124,19 @@ func TestVariableShortName(t *testing.T) {
 	assert.Equal(t, "hello$(n)", response.RawText)
 	assert.Equal(t, 2, len(response.Tokens))
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "hello",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[0])
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(n)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "n",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "n",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, response.Tokens[1])
@@ -149,36 +150,36 @@ func TestVariableSameVariableMultipleTimes(t *testing.T) {
 	assert.Equal(t, "hi $(user) hello $(user)", response.RawText)
 	assert.Equal(t, 4, len(response.Tokens))
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "hi ",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[0])
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(user)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "user",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "user",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, response.Tokens[1])
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   " hello ",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[2])
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(user)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "user",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "user",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, response.Tokens[3])
@@ -192,36 +193,36 @@ func TestVariableMultipleVariables(t *testing.T) {
 	assert.Equal(t, "hi $(user) to $(channel)", response.RawText)
 	assert.Equal(t, 4, len(response.Tokens))
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "hi ",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[0])
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(user)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "user",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "user",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, response.Tokens[1])
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   " to ",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[2])
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(channel)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "channel",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "channel",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, response.Tokens[3])
@@ -233,43 +234,43 @@ func TestMultipleVariablesNoSpace(t *testing.T) {
 	assert.Equal(t, "A$(user)B$(channel)C", response.RawText)
 	assert.Equal(t, 5, len(response.Tokens))
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "A",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[0])
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(user)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "user",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "user",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, response.Tokens[1])
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "B",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[2])
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(channel)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "channel",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "channel",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, response.Tokens[3])
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "C",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[4])
 }
 
@@ -281,36 +282,36 @@ func TestNestedVariable(t *testing.T) {
 	assert.Equal(t, "hi $(urlfetch http://twitch.tv/$(user)/01)", response.RawText)
 	assert.Equal(t, 2, len(response.Tokens))
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "hi ",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[0])
 
 	vToken := response.Tokens[1]
 	assert.Equal(t, "$(urlfetch http://twitch.tv/$(user)/01)", vToken.RawText)
-	assert.Equal(t, VariableTokenType, vToken.TokenType)
+	assert.Equal(t, models.VariableTokenType, vToken.TokenType)
 	assert.Equal(t, "urlfetch", vToken.VariableName)
 	assert.Equal(t, 3, len(vToken.Arguments))
 
 	// Examine nested tokens
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "urlfetch http://twitch.tv/",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, vToken.Arguments[0])
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(user)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "user",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "user",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, vToken.Arguments[1])
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "/01",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, vToken.Arguments[2])
 }
 
@@ -321,41 +322,41 @@ func TestNestedVariable2(t *testing.T) {
 	assert.Equal(t, "$(user) has followed for $(follow_age $(user))", response.RawText)
 	assert.Equal(t, 3, len(response.Tokens))
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(user)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "user",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "user",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, response.Tokens[0])
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   " has followed for ",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[1])
 
 	vToken := response.Tokens[2]
 	assert.Equal(t, "$(follow_age $(user))", vToken.RawText)
-	assert.Equal(t, VariableTokenType, vToken.TokenType)
+	assert.Equal(t, models.VariableTokenType, vToken.TokenType)
 	assert.Equal(t, "follow_age", vToken.VariableName)
 	assert.Equal(t, 2, len(vToken.Arguments))
 
 	// Examine nested tokens
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "follow_age ",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, vToken.Arguments[0])
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(user)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "user",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "user",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, vToken.Arguments[1])
@@ -367,48 +368,48 @@ func TestContinuousNestedVariables(t *testing.T) {
 	assert.Equal(t, "$(display_name)$(user)$(follow_age $(user))", response.RawText)
 	assert.Equal(t, 3, len(response.Tokens))
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(display_name)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "display_name",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "display_name",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, response.Tokens[0])
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(user)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "user",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "user",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, response.Tokens[1])
 
 	vToken := response.Tokens[2]
 	assert.Equal(t, "$(follow_age $(user))", vToken.RawText)
-	assert.Equal(t, VariableTokenType, vToken.TokenType)
+	assert.Equal(t, models.VariableTokenType, vToken.TokenType)
 	assert.Equal(t, "follow_age", vToken.VariableName)
 	assert.Equal(t, 2, len(vToken.Arguments))
 
 	// Examine nested tokens
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "follow_age ",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, vToken.Arguments[0])
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(user)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "user",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "user",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, vToken.Arguments[1])
@@ -422,37 +423,37 @@ func TestDeeplyNestedVariables1(t *testing.T) {
 
 	vToken := response.Tokens[0]
 	assert.Equal(t, "$($(a $(b) c))", vToken.RawText)
-	assert.Equal(t, VariableTokenType, vToken.TokenType)
+	assert.Equal(t, models.VariableTokenType, vToken.TokenType)
 	assert.Equal(t, "", vToken.VariableName) // Note that this is invalid token, therefore empty variable name.
 
 	nestedTokens1 := vToken.Arguments
 	assert.Equal(t, 1, len(nestedTokens1))
 	assert.Equal(t, "$(a $(b) c)", nestedTokens1[0].RawText)
-	assert.Equal(t, VariableTokenType, nestedTokens1[0].TokenType)
+	assert.Equal(t, models.VariableTokenType, nestedTokens1[0].TokenType)
 	assert.Equal(t, "a", nestedTokens1[0].VariableName)
 
 	nestedTokens2 := nestedTokens1[0].Arguments
 	assert.Equal(t, 3, len(nestedTokens2))
 
 	// Examine nested tokens
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "a ",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, nestedTokens2[0])
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(b)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "b",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "b",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, nestedTokens2[1])
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   " c",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, nestedTokens2[2])
 }
 
@@ -466,38 +467,38 @@ func TestUnfinishedNestedVariable1(t *testing.T) {
 	// " . Thanks" belongs to $(follow_age) variable because of malformed response.
 	assert.Equal(t, 2, len(response.Tokens))
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "followed for ",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[0])
 
 	// The second token is complicated
 	vToken := response.Tokens[1]
 	assert.Equal(t, "$(follow_age $(user) . Thanks", vToken.RawText)
-	assert.Equal(t, VariableTokenType, vToken.TokenType)
+	assert.Equal(t, models.VariableTokenType, vToken.TokenType)
 	assert.Equal(t, "follow_age", vToken.VariableName)
 
 	// Inspect nested tokens
 	nestedTokens1 := vToken.Arguments
 	assert.Equal(t, 3, len(nestedTokens1))
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "follow_age ",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, nestedTokens1[0])
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(user)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "user",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "user",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, nestedTokens1[1])
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   " . Thanks",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, nestedTokens1[2])
 }
 
@@ -508,32 +509,32 @@ func TestUnfinishedNestedVariable2(t *testing.T) {
 	// from $(follow_age till the end of string is the second token
 	assert.Equal(t, 2, len(response.Tokens))
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "followed for ",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[0])
 
 	// The second token is complicated
 	vToken := response.Tokens[1]
 	assert.Equal(t, "$(follow_age $(user . Thanks)", vToken.RawText)
-	assert.Equal(t, VariableTokenType, vToken.TokenType)
+	assert.Equal(t, models.VariableTokenType, vToken.TokenType)
 	assert.Equal(t, "follow_age", vToken.VariableName)
 
 	// Inspect nested tokens
 	nestedTokens1 := vToken.Arguments
 	assert.Equal(t, 2, len(nestedTokens1))
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "follow_age ",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, nestedTokens1[0])
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$(user . Thanks)",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "user",
-		Arguments: []Token{
-			Token{
+		Arguments: []models.Token{
+			models.Token{
 				RawText:   "user . Thanks",
-				TokenType: TextTokenType,
+				TokenType: models.TextTokenType,
 			},
 		},
 	}, nestedTokens1[1])
@@ -545,9 +546,9 @@ func TestVariableWithPartialOpeningTag(t *testing.T) {
 
 	assert.Equal(t, "hello $user)", response.RawText)
 	assert.Equal(t, 1, len(response.Tokens))
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "hello $user)",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, response.Tokens[0])
 }
 
@@ -559,19 +560,19 @@ func TestFullVariableWithNoName(t *testing.T) {
 
 	tokens := response.Tokens
 
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "hello ",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, tokens[0])
 	// Note that in this case, no arguments exist
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:      "$()",
-		TokenType:    VariableTokenType,
+		TokenType:    models.VariableTokenType,
 		VariableName: "",
 	}, tokens[1])
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   " world",
-		TokenType: TextTokenType,
+		TokenType: models.TextTokenType,
 	}, tokens[2])
 }
 
@@ -582,9 +583,9 @@ func TestPartialVariableWithNoName(t *testing.T) {
 	assert.Equal(t, 1, len(response.Tokens))
 
 	// Note that in this case, no arguments exist
-	assert.Equal(t, Token{
+	assert.Equal(t, models.Token{
 		RawText:   "$(",
-		TokenType: VariableTokenType,
+		TokenType: models.VariableTokenType,
 	}, response.Tokens[0])
 }
 

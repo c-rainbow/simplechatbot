@@ -8,6 +8,7 @@ import (
 	models "github.com/c-rainbow/simplechatbot/models"
 	parser "github.com/c-rainbow/simplechatbot/parser"
 	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
+	"github.com/c-rainbow/simplechatbot/plugins/chat/common"
 	"github.com/c-rainbow/simplechatbot/repository"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
@@ -60,7 +61,7 @@ func (plugin *AddCommandPlugin) ReactToChat(
 	targetCommandName, targetResponse := GetTargetCommandNameAndResponse(message.Text)
 
 	// TODO: Is it possible to get away from this continuous err == nil check?
-	err = ValidateBasicInputs(command, channel, AddCommandPluginType, sender, message)
+	err = common.ValidateBasicInputs(command, channel, AddCommandPluginType, sender, message)
 	if err == nil {
 		targetCommand, err = plugin.GetTargetCommand(channel, targetCommandName)
 	}
@@ -76,8 +77,8 @@ func (plugin *AddCommandPlugin) ReactToChat(
 
 	responseText, err := plugin.GetResponseText(command, targetCommand, channel, sender, message, err)
 
-	SendToChatClient(plugin.ircClient, channel, responseText)
-	HandleError(err)
+	common.SendToChatClient(plugin.ircClient, channel, responseText)
+	common.HandleError(err)
 }
 
 func (plugin *AddCommandPlugin) GetTargetCommand(channel string, targetName string) (*models.Command, error) {
@@ -130,7 +131,7 @@ func (plugin *AddCommandPlugin) BuildTargetCommand(
 	// Build a new Command object. Other fields are auto-initialized.
 	botID := plugin.repo.GetBotInfo().TwitchID
 	targetCommand := models.NewCommand(
-		botID, int64(channelID), targetCommandName, AddCommandPluginType, defaultResponse, failureRespopnse)
+		botID, int64(channelID), targetCommandName, CommandResponsePluginType, defaultResponse, failureRespopnse)
 	return targetCommand, nil
 }
 
@@ -140,8 +141,11 @@ func (plugin *AddCommandPlugin) GetResponseText(
 	message *twitch_irc.Message, err error) (string, error) {
 	// Get response key, build args, get parsed response, and convert it to text
 	responseKey := plugin.GetResponseKey(err)
-	args := []string{targetCommand.Name}
-	return ConvertToResponseText(command, responseKey, channel, sender, message, args)
+	args := []string{""}
+	if targetCommand != nil {
+		args = []string{targetCommand.Name}
+	}
+	return common.ConvertToResponseText(command, responseKey, channel, sender, message, args)
 }
 
 func (plugin *AddCommandPlugin) GetResponseKey(err error) string {
