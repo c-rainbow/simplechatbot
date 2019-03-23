@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"sync"
 
@@ -175,8 +176,8 @@ func (repo *BaseRepository) CreateNewChannel(channelToAdd *models.Channel) error
 	// First, check that there is no user with the same Twitch ID.
 	// Don't check for username because the streamer may call this right after changing username.
 	_, err := repo.getChannelFromTwitchID(channelToAdd.TwitchID)
-	if err != nil {
-		return err
+	if err == nil {
+		return ErrChannelAlreadyExists
 	}
 
 	// updateChannel() adds the channel to DB and channelMap if not exists.
@@ -218,8 +219,10 @@ func (repo *BaseRepository) AddBotToChannel(botInfo *models.Bot, channelToAdd *m
 
 // This function assumes that lock IS obtained by its caller
 func (repo *BaseRepository) updateChannel(chanInfo *models.Channel) error {
+	fmt.Println("Updating channel..")
 	chanTable := repo.db.Table(ChannelTableName)
 	err := chanTable.Put(chanInfo).Run()
+	fmt.Println("Channel put done")
 	// Update channelMap only when DB operation is successful
 	if err == nil {
 		repo.channelMap[chanInfo.Username] = chanInfo
