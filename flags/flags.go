@@ -1,7 +1,26 @@
 package flags
 
-import "flag"
+import (
+	"flag"
+)
 
-var DatabaseEndpoint = *flag.String("dynamodb-endpoint", "http://localhost:8000", "DynamoDB endpoint address")
-var DatabaseRegion = *flag.String("dynamodb-region", "us-west-2", "Default Region for DynamoDB")
-var DisableSSL = *flag.Bool("dynamodb-disable-ssl", true, "If true, disable SSL to connect to DynamoDB")
+var DatabaseEndpoint string
+var DatabaseRegion string
+var DisableSSL bool
+var ResetChannels bool
+
+func ParseAllFlags() {
+	// In go, flags have to be defined before flag.Parse(), and their actual values can be accessed by pointers
+	// only after flag.Parse() is called.
+	endpointPtr := flag.String("dynamodb-endpoint", "http://localhost:8000", "DynamoDB endpoint address")
+	regionPtr := flag.String("dynamodb-region", "us-west-2", "Default Region for DynamoDB")
+	sslPtr := flag.Bool("dynamodb-disable-ssl", true, "If true, disable SSL to connect to DynamoDB")
+	resetPtr := flag.Bool("reset-channels", false, "If true, reset Channels table")
+
+	flag.Parse()
+
+	DatabaseEndpoint = *endpointPtr
+	DatabaseRegion = *regionPtr
+	DisableSSL = *sslPtr
+	ResetChannels = *resetPtr
+}

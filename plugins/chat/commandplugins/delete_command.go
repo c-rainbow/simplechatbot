@@ -1,12 +1,8 @@
 package commandplugins
 
 import (
-	"log"
-	"strconv"
-
 	"github.com/c-rainbow/simplechatbot/client"
 	models "github.com/c-rainbow/simplechatbot/models"
-	"github.com/c-rainbow/simplechatbot/parser"
 	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
 	"github.com/c-rainbow/simplechatbot/plugins/chat/common"
 	"github.com/c-rainbow/simplechatbot/repository"
@@ -93,40 +89,6 @@ func (plugin *DeleteCommandPlugin) ValidateTargetCommand(targetCommand *models.C
 		return chatplugins.ErrTargetCommandNotFound
 	}
 	return nil
-}
-
-// Only needed for DeleteCommand
-func (plugin *DeleteCommandPlugin) BuildTargetCommand(
-	targetCommandName string, targetResponse string, channelIDStr string) (*models.Command, error) {
-	// Convert channelIDstr to int
-	channelID, err := strconv.Atoi(channelIDStr)
-	if err != nil {
-		// This error statement means ChannelID != channel's TwitchID, or a bug with IRC library
-		log.Println("Failed to convert ChannelID '", channelIDStr, "' to int.")
-		return nil, chatplugins.ErrInvalidArgument
-	}
-
-	// Build default response with the given message.
-	defaultResponse := parser.ParseResponse(targetResponse)
-	err = parser.Validate(defaultResponse)
-	if err != nil {
-		log.Println("Failed to validate target response")
-		return nil, err
-	}
-
-	// TODO: Find a nice, descriptive failure message.
-	failureRespopnse := parser.ParseResponse(chatplugins.DefaultFailureMessage)
-	err = parser.Validate(failureRespopnse)
-	if err != nil {
-		log.Println("Failed to validate default failure response")
-		return nil, err
-	}
-
-	// Build a new Command object. Other fields are auto-initialized.
-	botID := plugin.repo.GetBotInfo().TwitchID
-	targetCommand := models.NewCommand(
-		botID, int64(channelID), targetCommandName, DeleteCommandPluginType, defaultResponse, failureRespopnse)
-	return targetCommand, nil
 }
 
 // Get response text of the executed command, based on the errors and progress so far.

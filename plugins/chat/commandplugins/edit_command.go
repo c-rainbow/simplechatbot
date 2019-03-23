@@ -1,8 +1,8 @@
 package commandplugins
 
 import (
+	"errors"
 	"log"
-	"strconv"
 
 	"github.com/c-rainbow/simplechatbot/client"
 	models "github.com/c-rainbow/simplechatbot/models"
@@ -66,6 +66,9 @@ func (plugin *EditCommandPlugin) ReactToChat(
 		targetCommand, err = plugin.GetTargetCommand(channel, targetCommandName)
 	}
 	if err == nil {
+		err = plugin.EditTargetCommand(targetCommand, targetResponse)
+	}
+	if err == nil {
 		err = plugin.ValidateTargetCommand(targetCommand, targetResponse)
 	}
 	if err == nil {
@@ -95,41 +98,25 @@ func (plugin *EditCommandPlugin) ValidateTargetCommand(targetCommand *models.Com
 	if targetResponse == "" {
 		return chatplugins.ErrNotEnoughArguments
 	}
+	if targetCommand.Responses[models.DefaultResponseKey].RawText != targetResponse {
+		return errors.New("Default response different from the input")
+	}
 	return nil
 }
 
-// Only needed for EditCommand
-func (plugin *EditCommandPlugin) BuildTargetCommand(
-	targetCommandName string, targetResponse string, channelIDStr string) (*models.Command, error) {
-	// Convert channelIDstr to int
-	channelID, err := strconv.Atoi(channelIDStr)
-	if err != nil {
-		// This error statement means ChannelID != channel's TwitchID, or a bug with IRC library
-		log.Println("Failed to convert ChannelID '", channelIDStr, "' to int.")
-		return nil, chatplugins.ErrInvalidArgument
-	}
+// Only needed for EditCommand. Update the default response of the command model
+func (plugin *EditCommandPlugin) EditTargetCommand(targetCommand *models.Command, targetResponse string) error {
 
 	// Build default response with the given message.
 	defaultResponse := parser.ParseResponse(targetResponse)
-	err = parser.Validate(defaultResponse)
+	err := parser.Validate(defaultResponse)
 	if err != nil {
 		log.Println("Failed to validate target response")
-		return nil, err
+		return err
 	}
 
-	// TODO: Find a nice, descriptive failure message.
-	failureResponse := parser.ParseResponse(chatplugins.DefaultFailureMessage)
-	err = parser.Validate(failureResponse)
-	if err != nil {
-		log.Println("Failed to validate default failure response")
-		return nil, err
-	}
-
-	// Build a new Command object. Other fields are auto-initialized.
-	botID := plugin.repo.GetBotInfo().TwitchID
-	targetCommand := models.NewCommand(
-		botID, int64(channelID), targetCommandName, EditCommandPluginType, defaultResponse, failureResponse)
-	return targetCommand, nil
+	targetCommand.Responses[models.DefaultResponseKey] = *defaultResponse
+	return nil
 }
 
 // Get response text of the executed command, based on the errors and progress so far.

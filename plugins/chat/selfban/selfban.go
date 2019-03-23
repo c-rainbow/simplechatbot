@@ -56,10 +56,10 @@ func (plugin *SelfBanPlugin) ReactToChat(
 	err := common.ValidateBasicInputs(command, channel, SelfBanPluginType, sender, message)
 	if err == nil {
 		//banTime, err := plugin.ParseTime(message.Text)
-		banTime = 5
+		banTime = DefaultBanSeconds
 	}
 	if err != nil {
-		banTime = 5
+		banTime = DefaultBanSeconds
 	}
 
 	responseText, err := plugin.GetResponseText(command, channel, banTime, sender, message, err)
@@ -70,6 +70,7 @@ func (plugin *SelfBanPlugin) ReactToChat(
 
 func (plugin *SelfBanPlugin) TryBanUser(channel string, sender *twitch_irc.User, banTime int, responseText string) {
 	plugin.ircClient.Say(channel, "/timeout "+sender.Username+" "+strconv.Itoa(banTime))
+	plugin.ircClient.Say(channel, responseText)
 }
 
 // Get response text of the executed command, based on the errors and progress so far.

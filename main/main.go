@@ -1,8 +1,6 @@
 package main
 
 import (
-	// "fmt"
-
 	"fmt"
 	"time"
 
@@ -10,6 +8,7 @@ import (
 	"github.com/c-rainbow/simplechatbot/chathandler"
 	"github.com/c-rainbow/simplechatbot/client"
 	"github.com/c-rainbow/simplechatbot/db/localrun"
+	"github.com/c-rainbow/simplechatbot/flags"
 	"github.com/c-rainbow/simplechatbot/models"
 	"github.com/c-rainbow/simplechatbot/parser"
 	pluginmanager "github.com/c-rainbow/simplechatbot/plugins/chat/manager"
@@ -50,6 +49,14 @@ func main2() {
 
 // Run bot
 func main() {
+
+	flags.ParseAllFlags()
+
+	if flags.ResetChannels {
+		fmt.Println("Resetting channels...")
+		localrun.ResetChannelsTable()
+		return
+	}
 
 	baseRepo := repository.NewBaseRepository()
 	fmt.Println("line 1")

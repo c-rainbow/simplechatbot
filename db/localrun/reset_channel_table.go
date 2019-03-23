@@ -2,7 +2,6 @@ package localrun
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -21,12 +20,14 @@ import (
 // Delete and re-create Channels table
 // Add default channel with basic commands.
 func ResetChannelsTable() {
+	var err error
+
 	// First, recreate Channels table
-	err := RecreateChannelsTable()
+	/*err = RecreateChannelsTable()
 	if err != nil {
 		log.Fatalln("Error while recreating table:", err.Error())
 		return
-	}
+	}*/
 	// Build Channel struct
 	commandMap := make(map[string]models.Command)
 	botInfo := &models.Bot{TwitchID: DefaultBotTwitchID}
@@ -69,7 +70,9 @@ func ResetChannelsTable() {
 		"명령어 모음: $(arg0)")
 
 	AddCommandToMap(commandMap, botID, channelID, "!숫자", games.NumberGuesserPluginType, "")
+
 	AddCommandToMap(commandMap, botID, channelID, "!셀프밴", selfban.SelfBanPluginType, "@$(user) 님 밴")
+	AddCommandToMap(commandMap, botID, channelID, "!banme", selfban.SelfBanPluginType, "@$(user) You are banned for 5 seconds")
 
 	err = repo.CreateNewChannel(chanInfo)
 	if err != nil {
@@ -88,9 +91,9 @@ func RecreateChannelsTable() error {
 		Region:     aws.String(flags.DatabaseRegion),
 		DisableSSL: aws.Bool(flags.DisableSSL),
 	})
-
+	var err error
 	// Delete Channels table
-	err := db.Table(repository.ChannelTableName).DeleteTable().Run()
+	err = db.Table(repository.ChannelTableName).DeleteTable().Run()
 	if err != nil {
 		fmt.Println("Error while deleting Channels table. ", err.Error())
 		return err
