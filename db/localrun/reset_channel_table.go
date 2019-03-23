@@ -2,6 +2,7 @@ package localrun
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -23,11 +24,11 @@ func ResetChannelsTable() {
 	var err error
 
 	// First, recreate Channels table
-	/*err = RecreateChannelsTable()
+	err = RecreateChannelsTable()
 	if err != nil {
-		log.Fatalln("Error while recreating table:", err.Error())
+		log.Println("Error while recreating table:", err.Error())
 		return
-	}*/
+	}
 	// Build Channel struct
 	commandMap := make(map[string]models.Command)
 	botInfo := &models.Bot{TwitchID: DefaultBotTwitchID}
@@ -96,7 +97,7 @@ func RecreateChannelsTable() error {
 	err = db.Table(repository.ChannelTableName).DeleteTable().Run()
 	if err != nil {
 		fmt.Println("Error while deleting Channels table. ", err.Error())
-		return err
+		//return err
 	}
 
 	time.Sleep(1 * time.Second)
