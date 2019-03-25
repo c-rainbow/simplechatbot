@@ -61,6 +61,7 @@ func NewChatCommandPluginManager(
 	manager.RegisterPlugin(commandplugins.NewCommandResponsePluginFactory(ircClient, repo), 1)
 	manager.RegisterPlugin(games.NewNumberGuesserPluginFactory(ircClient, repo), 1)
 	manager.RegisterPlugin(selfban.NewSelfBanPluginFactory(ircClient), 1)
+	manager.RegisterPlugin(games.NewDicePluginFactory(ircClient), 1)
 
 	return &manager
 }

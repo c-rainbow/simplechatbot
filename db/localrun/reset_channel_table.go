@@ -75,6 +75,8 @@ func ResetChannelsTable() {
 	AddCommandToMap(commandMap, botID, channelID, "!셀프밴", selfban.SelfBanPluginType, "@$(user) 님 밴")
 	AddCommandToMap(commandMap, botID, channelID, "!banme", selfban.SelfBanPluginType, "@$(user) You are banned for 5 seconds")
 
+	AddCommandToMap(commandMap, botID, channelID, "!주사위", games.DicePluginType, ".")
+
 	err = repo.CreateNewChannel(chanInfo)
 	if err != nil {
 		fmt.Println("Error while adding channel ", err.Error())

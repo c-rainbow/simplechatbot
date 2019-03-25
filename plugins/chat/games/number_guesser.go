@@ -151,11 +151,14 @@ func (plugin *NumberGuesserPlugin) ProcessInGameCommands(args []string) string {
 	// Hopefully the chatter entered a valid number
 	default:
 		// Parse the number
-		num, err := strconv.Atoi(mainArg)
-		if err == nil && 1 <= num && num <= plugin.currentMax {
-			if num < plugin.answer { // answer higher than number
+		//num, err := strconv.Atoi(mainArg)
+		num, err := strconv.ParseFloat(mainArg, 64)
+		currentMaxFloat := float64(plugin.currentMax)
+		answerFloat := float64(plugin.answer)
+		if err == nil && 1 <= num && num <= currentMaxFloat {
+			if num < answerFloat { // answer higher than number
 				toSay = MessageHigherThanThat
-			} else if num > plugin.answer { // answer lower than number
+			} else if num > answerFloat { // answer lower than number
 				toSay = MessageLowerThanThat
 			} else { // correct!
 				toSay = MessageCorrect

@@ -51,6 +51,11 @@ func main2() {
 func main() {
 
 	flags.ParseAllFlags()
+	/*if true {
+		fmt.Println("Binary exe test...")
+		//time.Sleep(10 * time.Second)
+		return
+	}*/
 
 	if flags.ResetChannels {
 		fmt.Println("Resetting channels...")

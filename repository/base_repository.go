@@ -19,11 +19,11 @@ const (
 )
 
 var (
-	CommandNameNotFoundError  = errors.New("Command name is not found")
-	CommandAlreadyExistsError = errors.New("Command name already exists")
-	ErrChannelNotFound        = errors.New("Channel is not found")
-	ErrChannelAlreadyExists   = errors.New("Channel already exists")
-	ErrBotAlreadyInChannel    = errors.New("Bot is already running in the channel")
+	ErrCommandNotFound      = errors.New("Command name is not found")
+	ErrCommandAlreadyExists = errors.New("Command name already exists")
+	ErrChannelNotFound      = errors.New("Channel is not found")
+	ErrChannelAlreadyExists = errors.New("Channel already exists")
+	ErrBotAlreadyInChannel  = errors.New("Bot is already running in the channel")
 )
 
 // BaseRepositoryT interface to deal with persistent data
@@ -234,9 +234,12 @@ func (repo *BaseRepository) AddCommand(channel string, commandToAdd *models.Comm
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
-	chanInfo, exists := repo.getChannelAndCommandExists(channel, commandToAdd)
+	chanInfo, exists, err := repo.getChannelAndCommandExists(channel, commandToAdd)
+	if err != nil {
+		return err // Channel not found
+	}
 	if exists {
-		return CommandAlreadyExistsError
+		return ErrCommandAlreadyExists
 	}
 	chanInfo.Commands[commandToAdd.Name] = *commandToAdd
 	return repo.updateChannel(&chanInfo)
@@ -246,9 +249,12 @@ func (repo *BaseRepository) EditCommand(channel string, commandToEdit *models.Co
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
-	chanInfo, exists := repo.getChannelAndCommandExists(channel, commandToEdit)
+	chanInfo, exists, err := repo.getChannelAndCommandExists(channel, commandToEdit)
+	if err != nil {
+		return err // Channel not found
+	}
 	if !exists {
-		return CommandNameNotFoundError
+		return ErrCommandNotFound
 	}
 	chanInfo.Commands[commandToEdit.Name] = *commandToEdit
 	return repo.updateChannel(&chanInfo)
@@ -258,9 +264,12 @@ func (repo *BaseRepository) DeleteCommand(channel string, commandToDelete *model
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
-	chanInfo, exists := repo.getChannelAndCommandExists(channel, commandToDelete)
+	chanInfo, exists, err := repo.getChannelAndCommandExists(channel, commandToDelete)
+	if err != nil {
+		return err // Channel not found
+	}
 	if !exists {
-		return CommandNameNotFoundError
+		return ErrCommandNotFound
 	}
 	delete(chanInfo.Commands, commandToDelete.Name)
 	return repo.updateChannel(&chanInfo)
@@ -269,14 +278,14 @@ func (repo *BaseRepository) DeleteCommand(channel string, commandToDelete *model
 // Returns channel info and if the command exists. Called by Add/Edit/Delete Command methods.
 // This function assumes that mutex lock IS obtained by its caller.
 func (repo *BaseRepository) getChannelAndCommandExists(
-	channel string, command *models.Command) (models.Channel, bool) {
+	channel string, command *models.Command) (models.Channel, bool, error) {
 
-	chanInfo := repo.channelMap[channel]
-	if chanInfo == nil {
-		return models.Channel{}, false
+	chanInfo, exists := repo.channelMap[channel]
+	if !exists {
+		return models.Channel{}, false, ErrChannelNotFound
 	}
-	_, exists := chanInfo.Commands[command.Name]
-	return *chanInfo, exists // Make a copy not to make changes to the original
+	_, exists = chanInfo.Commands[command.Name]
+	return *chanInfo, exists, nil // Make a copy not to make changes to the original
 }
 
 func (repo *BaseRepository) ListCommands(channel string) ([]*models.Command, error) {
