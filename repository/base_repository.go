@@ -54,13 +54,15 @@ type BaseRepository struct {
 var _ BaseRepositoryT = (*BaseRepository)(nil)
 
 func NewBaseRepository() *BaseRepository {
-	// Initialize flag values
 	db := dynamo.New(session.New(), &aws.Config{
 		Endpoint:   aws.String(flags.DatabaseEndpoint),
 		Region:     aws.String(flags.DatabaseRegion),
 		DisableSSL: aws.Bool(flags.DisableSSL),
 	})
+	return NewBaseRepositoryCustomDB(db)
+}
 
+func NewBaseRepositoryCustomDB(db *dynamo.DB) *BaseRepository {
 	repo := &BaseRepository{db: db}
 	// This should be called after initialization because it uses another function of BaseRepository
 	repo.PopulateChannelMap()

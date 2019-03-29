@@ -1,7 +1,8 @@
 package helix
 
 import (
-	"fmt"
+	"log"
+	"strconv"
 
 	helix_api "github.com/nicklaw5/helix"
 )
@@ -31,7 +32,7 @@ func NewHelixClient(clientID string) HelixClientT {
 	})
 	if err != nil {
 		// handle error
-		fmt.Println("Error with Helix client", err.Error())
+		log.Println("Error with Helix client", err.Error())
 		return nil
 	}
 
@@ -40,21 +41,20 @@ func NewHelixClient(clientID string) HelixClientT {
 
 func (client *HelixClient) GetUsers(ids []int64, usernames []string) ([]helix_api.User, error) {
 	// Convert int64 ids to string
-	stringIDs := []string{}
-	/*if ids != nil {
+	var stringIDs []string
+	if ids != nil {
 		stringIDs := make([]string, len(ids))
 		for index, id64 := range ids {
 			stringIDs[index] = strconv.FormatInt(id64, 10)
 		}
-	}*/
+	}
 
 	resp, err := client.innerClient.GetUsers(&helix_api.UsersParams{
 		IDs:    stringIDs,
 		Logins: usernames,
 	})
 	if err != nil {
-		// handle error
-		fmt.Println("Error while getting users", err.Error())
+		log.Println("Error while getting users", err.Error())
 		return nil, err
 	}
 	return resp.Data.Users, nil

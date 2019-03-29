@@ -48,7 +48,7 @@ func main2() {
 	localrun.ResetChannelsTable()
 }
 
-func main() {
+func main11() {
 	client := helix.DefaultHelixClient()
 	users, err := client.GetUsers(nil, []string{"c_rainbow"})
 	_ = err
@@ -60,7 +60,7 @@ func main() {
 }
 
 // Run bot
-func main3() {
+func main() {
 
 	flags.ParseAllFlags()
 	/*if true {
