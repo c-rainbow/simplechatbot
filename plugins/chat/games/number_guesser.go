@@ -1,6 +1,8 @@
 package games
 
 import (
+	"fmt"
+	"math"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -99,7 +101,15 @@ func (plugin *NumberGuesserPlugin) ReactToChat(
 		response := plugin.ProcessArgument(args, sender)
 		// Parse the response message from above
 		parsedResponse := parser.ParseResponse(response)
+
+		num, err := strconv.ParseFloat(args[0], 64)
 		responseArgs := []string{args[0], strconv.Itoa(plugin.currentMax)}
+		if err == nil {
+			num = math.Round(num)
+			converted := fmt.Sprintf("%.0f", num)
+			responseArgs[0] = converted
+		}
+
 		responseText, err = parser.ConvertResponse(parsedResponse, channel, sender, message, responseArgs)
 	}
 
@@ -155,6 +165,9 @@ func (plugin *NumberGuesserPlugin) ProcessInGameCommands(args []string) string {
 		num, err := strconv.ParseFloat(mainArg, 64)
 		currentMaxFloat := float64(plugin.currentMax)
 		answerFloat := float64(plugin.answer)
+		if err == nil {
+			num = math.Round(num)
+		}
 		if err == nil && 1 <= num && num <= currentMaxFloat {
 			if num < answerFloat { // answer higher than number
 				toSay = MessageHigherThanThat

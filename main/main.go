@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/c-rainbow/simplechatbot/api/helix"
 	"github.com/c-rainbow/simplechatbot/bot"
 	"github.com/c-rainbow/simplechatbot/chathandler"
 	"github.com/c-rainbow/simplechatbot/client"
@@ -47,8 +48,19 @@ func main2() {
 	localrun.ResetChannelsTable()
 }
 
-// Run bot
 func main() {
+	client := helix.DefaultHelixClient()
+	users, err := client.GetUsers(nil, []string{"c_rainbow"})
+	_ = err
+	for _, user := range users {
+		fmt.Printf("ID: %s Name: %s\n", user.ID, user.DisplayName)
+		fmt.Printf("Description: %s Email: %s\n", user.Description, user.Email)
+		// fmt.Printf("ID: %s Name: %s\n", user.ID, user.DisplayName)
+	}
+}
+
+// Run bot
+func main3() {
 
 	flags.ParseAllFlags()
 	/*if true {

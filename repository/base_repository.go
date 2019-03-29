@@ -85,7 +85,7 @@ func (repo *BaseRepository) PopulateChannelMap() {
 // GetAllBots returns all Bot models in the database.
 func (repo *BaseRepository) GetAllBots() []*models.Bot {
 	bots := []*models.Bot{}
-	err := repo.db.Table(BotTableName).Scan().All(&bots)
+	err := repo.db.Table(BotTableName).Scan().Consistent(true).All(&bots)
 	if err != nil {
 		log.Fatal("Error while fetching all bots", err.Error())
 	}
@@ -95,7 +95,7 @@ func (repo *BaseRepository) GetAllBots() []*models.Bot {
 // GetAllChannels returns all Channel models in the database.
 func (repo *BaseRepository) GetAllChannels() []*models.Channel {
 	channels := []*models.Channel{}
-	err := repo.db.Table(ChannelTableName).Scan().All(&channels)
+	err := repo.db.Table(ChannelTableName).Scan().Consistent(true).All(&channels)
 	if err != nil {
 		log.Fatal("Error while fetching all channels", err.Error())
 	}
@@ -105,7 +105,7 @@ func (repo *BaseRepository) GetAllChannels() []*models.Channel {
 // GetAllChannels returns all channels for this bot.
 func (repo *BaseRepository) GetAllChannelsForBot(botID int64) []*models.Channel {
 	channels := []*models.Channel{}
-	err := repo.db.Table(ChannelTableName).Scan().Filter(
+	err := repo.db.Table(ChannelTableName).Scan().Consistent(true).Filter(
 		"contains(BotIDs, ?)", botID).All(&channels)
 	if err != nil {
 		log.Fatal("Error while finding channels for bot", err.Error())
