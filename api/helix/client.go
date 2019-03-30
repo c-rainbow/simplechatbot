@@ -2,7 +2,6 @@ package helix
 
 import (
 	"log"
-	"strconv"
 
 	helix_api "github.com/nicklaw5/helix"
 )
@@ -12,7 +11,9 @@ const (
 )
 
 type HelixClientT interface {
-	GetUsers(ids []int64, usernames []string) ([]helix_api.User, error)
+	GetUsers(ids []string, usernames []string) ([]helix_api.User, error)
+	GetUsersFollows(fromID string, toID string) ([]helix_api.UserFollow, error)
+	GetStreams(ids []string, usernames []string) ([]helix_api.Stream, error)
 }
 
 type HelixClient struct {
@@ -31,26 +32,18 @@ func NewHelixClient(clientID string) HelixClientT {
 		ClientID: clientID,
 	})
 	if err != nil {
-		// handle error
-		log.Println("Error with Helix client", err.Error())
+		log.Println("Error creating new Helix client", err.Error())
 		return nil
 	}
 
 	return &HelixClient{clientID: clientID, innerClient: client}
 }
 
-func (client *HelixClient) GetUsers(ids []int64, usernames []string) ([]helix_api.User, error) {
+// ids are numeric IDs.
+func (client *HelixClient) GetUsers(ids []string, usernames []string) ([]helix_api.User, error) {
 	// Convert int64 ids to string
-	var stringIDs []string
-	if ids != nil {
-		stringIDs := make([]string, len(ids))
-		for index, id64 := range ids {
-			stringIDs[index] = strconv.FormatInt(id64, 10)
-		}
-	}
-
 	resp, err := client.innerClient.GetUsers(&helix_api.UsersParams{
-		IDs:    stringIDs,
+		IDs:    ids,
 		Logins: usernames,
 	})
 	if err != nil {
@@ -60,26 +53,28 @@ func (client *HelixClient) GetUsers(ids []int64, usernames []string) ([]helix_ap
 	return resp.Data.Users, nil
 }
 
-/*
-func Client() {
-
-	resp, err := client.GetUsers(&helix_api.UsersParams{
-		IDs:    []string{"18074328"},
-		Logins: []string{"c_rainbow"},
+// Here, fromID and toID are numeric IDs.
+func (client *HelixClient) GetUsersFollows(fromID string, toID string) ([]helix_api.UserFollow, error) {
+	resp, err := client.innerClient.GetUsersFollows(&helix_api.UsersFollowsParams{
+		FromID: fromID, ToID: toID,
 	})
+
 	if err != nil {
-		// handle error
+		log.Println("Error while getting users follows", err.Error())
+		return nil, err
 	}
-
-	fmt.Printf("Status code: %d\n", resp.StatusCode)
-	fmt.Printf("Rate limit: %d\n", resp.GetRateLimit())
-	fmt.Printf("Rate limit remaining: %d\n", resp.GetRateLimitRemaining())
-	fmt.Printf("Rate limit reset: %d\n\n", resp.GetRateLimitReset())
-
-	for _, user := range resp.Data.Users {
-		fmt.Printf("ID: %s Name: %s\n", user.ID, user.DisplayName)
-		fmt.Printf("Description: %s Email: %s\n", user.Description, user.Email)
-		// fmt.Printf("ID: %s Name: %s\n", user.ID, user.DisplayName)
-	}
+	return resp.Data.Follows, nil
 }
-*/
+
+// ids are numeric IDs.
+func (client *HelixClient) GetStreams(ids []string, usernames []string) ([]helix_api.Stream, error) {
+	resp, err := client.innerClient.GetStreams(&helix_api.StreamsParams{
+		UserIDs: ids, UserLogins: usernames,
+	})
+
+	if err != nil {
+		log.Println("Error while getting streams", err.Error())
+		return nil, err
+	}
+	return resp.Data.Streams, nil
+}
