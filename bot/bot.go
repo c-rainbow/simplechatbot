@@ -11,6 +11,11 @@ import (
 	repository "github.com/c-rainbow/simplechatbot/repository"
 )
 
+type TwitchChatBotT interface {
+	Start()
+	Shutdown()
+}
+
 // TwitchChatBot Twitch chat bot struct
 type TwitchChatBot struct {
 	botInfo        *models.Bot
@@ -18,6 +23,8 @@ type TwitchChatBot struct {
 	repo           repository.BaseRepositoryT
 	messageHandler chathandler.ChatMessageHandlerT
 }
+
+var _ TwitchChatBotT = (*TwitchChatBot)(nil)
 
 func NewTwitchChatBot(
 	botInfo *models.Bot, ircClient client.TwitchClientT, repo repository.BaseRepositoryT,
@@ -30,7 +37,7 @@ func NewTwitchChatBot(
 	}
 }
 
-func (bot *TwitchChatBot) Connect() {
+func (bot *TwitchChatBot) Start() {
 	client := bot.ircClient
 	client.OnNewMessage(bot.messageHandler.OnNewMessage)
 
@@ -46,6 +53,7 @@ func (bot *TwitchChatBot) Connect() {
 	}
 }
 
-func (bot *TwitchChatBot) Disconnect() {
+func (bot *TwitchChatBot) Shutdown() {
+	// TODO: close chans
 	bot.ircClient.Disconnect()
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/c-rainbow/simplechatbot/api/helix"
 	"github.com/c-rainbow/simplechatbot/client"
+	"github.com/c-rainbow/simplechatbot/config"
 	"github.com/c-rainbow/simplechatbot/models"
 	"github.com/c-rainbow/simplechatbot/repository"
 	"github.com/go-ini/ini"
@@ -19,8 +20,6 @@ import (
 const (
 	DefaultBotSection     = "DefaultBot"
 	DefaultChannelSection = "DefaultChannel"
-	DynamoDBSection       = "DynamoDB"
-	TwitchAPISection      = "TwitchAPI"
 )
 
 var (
@@ -37,7 +36,7 @@ type InstallerMessages struct {
 	DynamoDBConnectionError      string
 }
 
-type DynamoDBData struct {
+type DynamoDBConfig struct {
 	endpoint   string
 	region     string
 	disableSSL bool
@@ -171,7 +170,7 @@ func (installer *Installer) TryAccessingChatServer(bot *models.Bot) error {
 	return err
 }
 
-func (installer *Installer) TryAccessingDynamoDB(dbConfig *DynamoDBData) (*dynamo.DB, error) {
+func (installer *Installer) TryAccessingDynamoDB(dbConfig *DynamoDBConfig) (*dynamo.DB, error) {
 	db := dynamo.New(session.New(), &aws.Config{
 		Endpoint:   aws.String(dbConfig.endpoint),
 		Region:     aws.String(dbConfig.region),
@@ -201,15 +200,15 @@ func ReadChannel(iniFile *ini.File) *models.Channel {
 	return &models.Channel{Username: username}
 }
 
-func ReadDynamoDB(iniFile *ini.File) *DynamoDBData {
-	dbSection := iniFile.Section(DynamoDBSection)
+func ReadDynamoDB(iniFile *ini.File) *DynamoDBConfig {
+	dbSection := iniFile.Section(config.DynamoDBSection)
 	endpoint := dbSection.Key("DynamoDBAddress").String()
 	region := dbSection.Key("DynamoDBRegion").String()
 	disableSSL := dbSection.Key("DynamoDisableSSL").MustBool(true)
-	return &DynamoDBData{endpoint: endpoint, region: region, disableSSL: disableSSL}
+	return &DynamoDBConfig{endpoint: endpoint, region: region, disableSSL: disableSSL}
 }
 
 func ReadClientID(iniFile *ini.File) string {
-	apiSection := iniFile.Section(TwitchAPISection)
+	apiSection := iniFile.Section(config.TwitchAPISection)
 	return apiSection.Key("ClientID").String()
 }
