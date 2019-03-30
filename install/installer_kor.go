@@ -3,19 +3,11 @@ package install
 import (
 	"errors"
 	"log"
-	"strconv"
-	"time"
 
-	"github.com/c-rainbow/simplechatbot/repository"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/guregu/dynamo"
+	"github.com/c-rainbow/simplechatbot/flags"
 
 	"github.com/c-rainbow/simplechatbot/api/helix"
 	"github.com/c-rainbow/simplechatbot/client"
-	"github.com/c-rainbow/simplechatbot/config"
-	"github.com/c-rainbow/simplechatbot/models"
 	"github.com/go-ini/ini"
 )
 
@@ -43,143 +35,26 @@ var (
 
 */
 
-type InstallerKor struct {
-	iniFile     *ini.File
-	ircClient   client.TwitchClientT
-	helixClient helix.HelixClientT
-}
+var (
+	InstallerMessagesKorean = &InstallerMessages{
+		NoHelixClient:                "트위치 API에 연결할 수 없습니다",
+		TwitchUsersAPIError:          "트위치 Users API 에서 정보를 가져올 수 없습니다",
+		TwitchBotAccountNotFound:     "봇 계정을 찾을 수 없습니다",
+		TwitchChannelAccountNotFound: "채널 계정을 찾을 수 없습니다",
+		ChatServerSuccessfulLogin:    "채팅 서버에 성공적으로 접속하였습니다. 3초 후 접속을 종료합니다",
+		ChatServerFailedLogin:        "채팅 서버 접속에 실패하였습니다. 설정을 확인해 주세요.",
+		DynamoDBConnectionError:      "DynamoDB에 접속 중 오류가 발생했습니다",
+	}
+)
 
-func NewInstallerKor() *InstallerKor {
-	iniFile := ReadConfig()
-
-	botSection := iniFile.Section(DefaultBotSection)
-	botUsername := botSection.Key("BotUsername").String()
-	botOauthToken := botSection.Key("BotOauthToken").String()
-	ircClient := client.NewTwitchClient(botUsername, botOauthToken)
-
-	helixClient := helix.DefaultHelixClient()
-	if iniFile == nil || helixClient == nil {
-		log.Println("Cannot get new installer")
-		return nil
-	}
-	return &InstallerKor{iniFile: iniFile, ircClient: ircClient, helixClient: helixClient}
-}
-
-func (installer *InstallerKor) Install() error {
-	var bot *models.Bot
-	var channel *models.Channel
-	var db *dynamo.DB
-	var baseRepo repository.BaseRepositoryT
-	bot, err := installer.CheckIfBotAccountExists()
-	if err == nil {
-		err = installer.TryAccessingChatServer(bot)
-	}
-	if err == nil {
-		channel, err = installer.CheckIfChannelAccountExists()
-	}
-
-	if err == nil {
-		db, err = installer.TryAccessingDynamoDB()
-	}
-	if err == nil {
-		// Create Bots table
-		err = db.CreateTable(repository.BotTableName, models.Bot{}).Run()
-	}
-	if err == nil {
-		// Create Channels table
-		err = db.CreateTable(repository.ChannelTableName, models.Channel{}).Run()
-	}
-	if err == nil {
-		// Add Bot to Bots table
-		baseRepo = repository.NewBaseRepositoryCustomDB(db)
-		err = baseRepo.CreateNewBot(bot)
-	}
-	if err == nil {
-		// Add channel to Channels table
-		err = baseRepo.CreateNewChannel(channel)
-	}
-	if err == nil {
-		// Add bot to channel
-		err = baseRepo.AddBotToChannel(bot, channel)
-	}
-	return err
-}
-
-func (installer *InstallerKor) CheckIfBotAccountExists() (*models.Bot, error) {
-	botSection := installer.iniFile.Section(DefaultBotSection)
-	botUsername := botSection.Key("BotUsername").String()
-	botOauthToken := botSection.Key("BotOauthToken").String()
-
-	users, err := installer.helixClient.GetUsers(nil, []string{botUsername})
+func NewInstallerKor() *Installer {
+	iniFile, err := ini.Load(flags.InstallationConfigFile)
 	if err != nil {
-		return nil, err
-	}
-	if len(users) == 0 {
-		return nil, ErrTwitchAccoutNotFound
+		log.Fatalln("설정 파일을 읽어오는데 실패하였습니다.", err.Error())
 	}
 
-	botAccount := users[0]
-	botID, err := strconv.ParseInt(botAccount.ID, 10, 64)
-	if err != nil {
-		return nil, err // No way this will be error, just checking.
-	}
-	return &models.Bot{TwitchID: botID, Username: botAccount.Login, OauthToken: botOauthToken}, nil
-}
-
-func (installer *InstallerKor) CheckIfChannelAccountExists() (*models.Channel, error) {
-	channelSection := installer.iniFile.Section(DefaultChannelSection)
-	channelUsername := channelSection.Key("ChannelUsername").String()
-
-	users, err := installer.helixClient.GetUsers(nil, []string{channelUsername})
-	if err != nil {
-		return nil, err
-	}
-	if len(users) == 0 {
-		return nil, ErrTwitchAccoutNotFound
-	}
-
-	channelAccount := users[0]
-	channelID, err := strconv.ParseInt(channelAccount.ID, 10, 64)
-	if err != nil {
-		return nil, err // No way this will be error, just checking.
-	}
-	return &models.Channel{TwitchID: channelID, Username: channelAccount.Login}, nil
-}
-
-func ReadConfig() *ini.File {
-	iniFile, err := config.NewConfig()
-	if err != nil {
-		log.Println("Error while reading config file", err.Error())
-		return nil
-	}
-	return iniFile
-}
-
-func (installer *InstallerKor) TryAccessingChatServer(bot *models.Bot) error {
-	// TODO: Consider using goroutine to prevent blocking
-	installer.ircClient.OnConnect(func() {
-		log.Println("Successfully connected to Twitch chat server. Disconnecting in 3 seconds")
-		time.Sleep(3 * time.Second)
-		installer.ircClient.Disconnect()
-	})
-
-	err := installer.ircClient.Connect()
-	return err
-}
-
-func (installer *InstallerKor) TryAccessingDynamoDB() (*dynamo.DB, error) {
-	dbSection := installer.iniFile.Section(DynamoDBSection)
-	dbAddress := dbSection.Key("DynamoDBAddress").String()
-	dbRegion := dbSection.Key("DynamoDBRegion").String()
-	dbDisableSSL := dbSection.Key("DynamoDisableSSL").MustBool(true)
-
-	db := dynamo.New(session.New(), &aws.Config{
-		Endpoint:   aws.String(dbAddress),
-		Region:     aws.String(dbRegion),
-		DisableSSL: aws.Bool(dbDisableSSL),
-	})
-
-	// List tables to check connection
-	_, err := db.ListTables().All()
-	return db, err
+	installer := &Installer{
+		iniFile: iniFile, ircClientFunc: client.NewTwitchClient, helixClientFunc: helix.NewHelixClient,
+		messages: InstallerMessagesKorean}
+	return installer
 }

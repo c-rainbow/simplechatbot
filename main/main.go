@@ -10,6 +10,7 @@ import (
 	"github.com/c-rainbow/simplechatbot/client"
 	"github.com/c-rainbow/simplechatbot/db/localrun"
 	"github.com/c-rainbow/simplechatbot/flags"
+	"github.com/c-rainbow/simplechatbot/install"
 	"github.com/c-rainbow/simplechatbot/models"
 	"github.com/c-rainbow/simplechatbot/parser"
 	pluginmanager "github.com/c-rainbow/simplechatbot/plugins/chat/manager"
@@ -59,8 +60,17 @@ func main11() {
 	}
 }
 
-// Run bot
 func main() {
+	flags.ParseAllFlags()
+	installer := install.NewInstallerEng()
+	err := installer.Install()
+	if err != nil {
+		fmt.Println("error: ", err.Error())
+	}
+}
+
+// Run bot
+func main30() {
 
 	flags.ParseAllFlags()
 	/*if true {
