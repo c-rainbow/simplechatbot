@@ -52,7 +52,7 @@ func (plugin *CommandResponsePlugin) GetPluginType() string {
 }
 
 func (plugin *CommandResponsePlugin) ReactToChat(
-	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message) {
+	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage) {
 	// Basic validations
 	err := common.ValidateBasicInputs(command, channel, CommandResponsePluginType, sender, message)
 
@@ -63,7 +63,7 @@ func (plugin *CommandResponsePlugin) ReactToChat(
 }
 
 func (plugin *CommandResponsePlugin) GetResponseText(
-	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message,
+	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage,
 	err error) (string, error) {
 	// Get response key, build args, get parsed response, and convert it to text
 	responseKey := plugin.GetResponseKey(err)

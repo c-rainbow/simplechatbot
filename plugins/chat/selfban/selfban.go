@@ -50,12 +50,12 @@ func (plugin *SelfBanPlugin) GetPluginType() string {
 }
 
 func (plugin *SelfBanPlugin) ReactToChat(
-	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message) {
+	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage) {
 	var banTime int
 	// TODO: Is it possible to get away from this continuous err == nil check?
 	err := common.ValidateBasicInputs(command, channel, SelfBanPluginType, sender, message)
 	if err == nil {
-		//banTime, err := plugin.ParseTime(message.Text)
+		//banTime, err := plugin.ParseTime(message.Message)
 		banTime = DefaultBanSeconds
 	}
 	if err != nil {
@@ -69,13 +69,13 @@ func (plugin *SelfBanPlugin) ReactToChat(
 }
 
 func (plugin *SelfBanPlugin) TryBanUser(channel string, sender *twitch_irc.User, banTime int, responseText string) {
-	plugin.ircClient.Say(channel, "/timeout "+sender.Username+" "+strconv.Itoa(banTime))
+	plugin.ircClient.Say(channel, "/timeout "+sender.Name+" "+strconv.Itoa(banTime))
 	plugin.ircClient.Say(channel, responseText)
 }
 
 // Get response text of the executed command, based on the errors and progress so far.
 func (plugin *SelfBanPlugin) GetResponseText(
-	command *models.Command, channel string, banTime int, sender *twitch_irc.User, message *twitch_irc.Message,
+	command *models.Command, channel string, banTime int, sender *twitch_irc.User, message *twitch_irc.PrivateMessage,
 	err error) (string, error) {
 
 	// Get response key, build args, get parsed response, and convert it to text

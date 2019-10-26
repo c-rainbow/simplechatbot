@@ -30,7 +30,7 @@ polling from the channel until it closes.
 
 type ChatCommandPluginManagerT interface {
 	RegisterPlugin(factory chatplugins.ChatCommandPluginFactoryT, count int)
-	ProcessChat(channel string, sender *twitch_irc.User, message *twitch_irc.Message)
+	ProcessChat(channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage)
 	Close()
 }
 
@@ -46,7 +46,7 @@ type WorkItem struct {
 	command *models.Command
 	channel string
 	sender  *twitch_irc.User
-	message *twitch_irc.Message
+	message *twitch_irc.PrivateMessage
 }
 
 func NewChatCommandPluginManager(
@@ -90,10 +90,10 @@ func (manager *ChatCommandPluginManager) RegisterPlugin(
 }
 
 func (manager *ChatCommandPluginManager) ProcessChat(
-	channel string, sender *twitch_irc.User, message *twitch_irc.Message) {
+	channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage) {
 
 	// Parse command name and get command, if any
-	commandName := GetCommandName(message.Text)
+	commandName := GetCommandName(message.Message)
 	command := manager.repo.GetCommandByChannelAndName(channel, commandName)
 	if command == nil { // Chat is not a bot command.
 		return

@@ -66,7 +66,7 @@ func (plugin *DicePlugin) GetPluginType() string {
 }
 
 func (plugin *DicePlugin) ReactToChat(
-	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message) {
+	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage) {
 
 	responseText := ""
 	err := common.ValidateBasicInputs(command, channel, DicePluginType, sender, message)

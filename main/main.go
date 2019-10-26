@@ -62,6 +62,9 @@ func main11() {
 
 func main() {
 	flags.ParseAllFlags()
+	if 1 == 1 {
+		return
+	}
 	installer := install.NewInstallerEng()
 	err := installer.Install()
 	if err != nil {
@@ -100,7 +103,7 @@ func main30() {
 	fmt.Println("line 5")
 	bot := bot.NewTwitchChatBot(botModels[0], ircClient, baseRepo, handler)
 	fmt.Println("line 6")
-	bot.Connect()
+	bot.Start()
 	fmt.Println("line 7")
 	// chatBot.Disconnect()
 	// fmt.Println("Disconnected in main.go")

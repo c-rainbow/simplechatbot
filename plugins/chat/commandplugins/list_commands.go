@@ -55,7 +55,7 @@ func (plugin *ListCommandsPlugin) GetPluginType() string {
 }
 
 func (plugin *ListCommandsPlugin) ReactToChat(
-	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message) {
+	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage) {
 	var targetCommands []*models.Command
 	err := common.ValidateBasicInputs(command, channel, ListCommandsPluginType, sender, message)
 	if err == nil {
@@ -71,7 +71,7 @@ func (plugin *ListCommandsPlugin) ReactToChat(
 // Get response text of the executed command, based on the errors and progress so far.
 func (plugin *ListCommandsPlugin) GetResponseText(
 	command *models.Command, targetCommands []*models.Command, channel string, sender *twitch_irc.User,
-	message *twitch_irc.Message, err error) (string, error) {
+	message *twitch_irc.PrivateMessage, err error) (string, error) {
 	// Get response key, build args, get parsed response, and convert it to text
 	responseKey := plugin.GetResponseKey(err)
 	args := []string{plugin.GetSortedCommandNames(targetCommands)}

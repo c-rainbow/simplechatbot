@@ -17,7 +17,7 @@ var (
 
 // It is assumed that the response is already validated
 func ConvertResponse(
-	response *models.ParsedResponse, channel string, sender *twitch_irc.User, message *twitch_irc.Message,
+	response *models.ParsedResponse, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage,
 	args []string) (string, error) {
 	var builder strings.Builder
 	for _, token := range response.Tokens {
@@ -59,7 +59,7 @@ func ConvertResponse(
 }
 
 func ConvertChatVariables(
-	token *models.Token, channel string, sender *twitch_irc.User, message *twitch_irc.Message) (string, error) {
+	token *models.Token, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage) (string, error) {
 	// This check is here only for robustness.
 	// In normal workflow, this if-statement will always be skipped.
 	if token.TokenType != models.VariableTokenType {
@@ -71,7 +71,7 @@ func ConvertChatVariables(
 	case User:
 		return sender.DisplayName, nil
 	case UserID:
-		return sender.UserID, nil
+		return sender.ID, nil
 	case DisplayName:
 		return sender.DisplayName, nil
 	case Channel:

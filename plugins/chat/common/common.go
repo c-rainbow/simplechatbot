@@ -14,7 +14,7 @@ import (
 // Validate basic inputs. Check for existence, plugin type, and user permission of the command
 func ValidateBasicInputs(
 	command *models.Command, channel string, expectedPluginType string, sender *twitch_irc.User,
-	message *twitch_irc.Message) error {
+	message *twitch_irc.PrivateMessage) error {
 	if command == nil {
 		return chatplugins.ErrCommandNotFound
 	}
@@ -34,8 +34,8 @@ func ValidateBasicInputs(
 }
 
 func ConvertToResponseText(
-	command *models.Command, responseKey string, channel string, sender *twitch_irc.User, message *twitch_irc.Message,
-	args []string) (string, error) {
+	command *models.Command, responseKey string, channel string, sender *twitch_irc.User,
+	message *twitch_irc.PrivateMessage, args []string) (string, error) {
 
 	// Get parsed response with the response key
 	parsedResponse, exists := command.Responses[responseKey]
@@ -61,9 +61,9 @@ func ConvertToResponseText(
 // so it is not included here.
 // TODO: How to check VIP and staff status?
 func UserHasPermission(channel string, command *models.Command, sender *twitch_irc.User,
-	message *twitch_irc.Message) bool {
+	message *twitch_irc.PrivateMessage) bool {
 	// (1) Broadcaster can do everything
-	if sender.Username == channel {
+	if sender.Name == channel {
 		return true
 	}
 

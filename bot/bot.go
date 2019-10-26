@@ -55,5 +55,12 @@ func (bot *TwitchChatBot) Start() {
 
 func (bot *TwitchChatBot) Shutdown() {
 	// TODO: close chans
-	bot.ircClient.Disconnect()
+	client := bot.ircClient
+
+	channels := bot.repo.GetAllChannelsForBot(bot.botInfo.TwitchID)
+	for _, channel := range channels {
+		client.Depart(channel.Username)
+	}
+
+	client.Disconnect()
 }

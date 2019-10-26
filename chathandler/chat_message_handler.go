@@ -13,7 +13,7 @@ import (
 )
 
 type ChatMessageHandlerT interface {
-	OnNewMessage(channel string, sender twitch_irc.User, message twitch_irc.Message)
+	OnNewMessage(channel string, sender twitch_irc.User, message twitch_irc.PrivateMessage)
 }
 
 type ChatMessageHandler struct {
@@ -31,13 +31,13 @@ func NewChatMessageHandler(
 	return &ChatMessageHandler{botInfo: botInfo, repo: repo, ircClient: ircClient, chatPluginManager: chatPluginManager}
 }
 
-func (handler *ChatMessageHandler) OnNewMessage(channel string, sender twitch_irc.User, message twitch_irc.Message) {
+func (handler *ChatMessageHandler) OnNewMessage(channel string, sender twitch_irc.User, message twitch_irc.PrivateMessage) {
 	log.Println("Chat received: ", message.Raw)
 
 	// TODO: Delete this hardcoded quit message.
-	commandName := getCommandName(message.Text)
+	commandName := getCommandName(message.Message)
 	commandName = strings.ToLower(commandName)
-	if commandName == "!quit" && sender.Username == "c_rainbow" {
+	if commandName == "!quit" && sender.Name == "c_rainbow" {
 		handler.ircClient.Depart(channel)
 		handler.ircClient.Disconnect()
 	}

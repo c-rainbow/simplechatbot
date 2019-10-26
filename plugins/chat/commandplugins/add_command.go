@@ -54,11 +54,11 @@ func (plugin *AddCommandPlugin) GetPluginType() string {
 }
 
 func (plugin *AddCommandPlugin) ReactToChat(
-	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message) {
+	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage) {
 	var err error
 	var targetCommand *models.Command
 
-	targetCommandName, targetResponse := GetTargetCommandNameAndResponse(message.Text)
+	targetCommandName, targetResponse := GetTargetCommandNameAndResponse(message.Message)
 
 	// TODO: Is it possible to get away from this continuous err == nil check?
 	err = common.ValidateBasicInputs(command, channel, AddCommandPluginType, sender, message)
@@ -69,7 +69,8 @@ func (plugin *AddCommandPlugin) ReactToChat(
 		err = plugin.ValidateTargetCommand(targetCommand, targetResponse)
 	}
 	if err == nil {
-		targetCommand, err = plugin.BuildTargetCommand(targetCommandName, targetResponse, message.ChannelID)
+		// TODO: message.RoomID is integer channel ID. This function will silently fail if chat is from other rooms.
+		targetCommand, err = plugin.BuildTargetCommand(targetCommandName, targetResponse, message.RoomID)
 	}
 	if err == nil {
 		err = plugin.repo.AddCommand(channel, targetCommand)
@@ -138,7 +139,7 @@ func (plugin *AddCommandPlugin) BuildTargetCommand(
 // Get response text of the executed command, based on the errors and progress so far.
 func (plugin *AddCommandPlugin) GetResponseText(
 	command *models.Command, targetCommand *models.Command, channel string, sender *twitch_irc.User,
-	message *twitch_irc.Message, err error) (string, error) {
+	message *twitch_irc.PrivateMessage, err error) (string, error) {
 	// Get response key, build args, get parsed response, and convert it to text
 	responseKey := plugin.GetResponseKey(err)
 	args := []string{""}

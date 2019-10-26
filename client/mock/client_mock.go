@@ -5,9 +5,10 @@
 package mock_client
 
 import (
+	reflect "reflect"
+
 	go_twitch_irc "github.com/gempir/go-twitch-irc"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
 // MockTwitchClientT is a mock of TwitchClientT interface
@@ -110,7 +111,7 @@ func (mr *MockTwitchClientTMockRecorder) OnConnect(callback interface{}) *gomock
 }
 
 // OnNewMessage mocks base method
-func (m *MockTwitchClientT) OnNewMessage(arg0 func(string, go_twitch_irc.User, go_twitch_irc.Message)) {
+func (m *MockTwitchClientT) OnNewMessage(arg0 func(string, go_twitch_irc.User, go_twitch_irc.PrivateMessage)) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "OnNewMessage", arg0)
 }

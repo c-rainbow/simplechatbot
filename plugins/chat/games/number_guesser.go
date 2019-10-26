@@ -92,11 +92,11 @@ func (plugin *NumberGuesserPlugin) GetPluginType() string {
 }
 
 func (plugin *NumberGuesserPlugin) ReactToChat(
-	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message) {
+	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage) {
 	responseText := ""
 	err := common.ValidateBasicInputs(command, channel, NumberGuesserPluginType, sender, message)
 	if err == nil {
-		args := plugin.ParseArguments(message.Text)
+		args := plugin.ParseArguments(message.Message)
 
 		response := plugin.ProcessArgument(args, sender)
 		// Parse the response message from above

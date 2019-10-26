@@ -54,11 +54,11 @@ func (plugin *EditCommandPlugin) GetPluginType() string {
 }
 
 func (plugin *EditCommandPlugin) ReactToChat(
-	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.Message) {
+	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage) {
 	var err error
 	var targetCommand *models.Command
 
-	targetCommandName, targetResponse := GetTargetCommandNameAndResponse(message.Text)
+	targetCommandName, targetResponse := GetTargetCommandNameAndResponse(message.Message)
 
 	// TODO: Is it possible to get away from this continuous err == nil check?
 	err = common.ValidateBasicInputs(command, channel, EditCommandPluginType, sender, message)
@@ -122,7 +122,7 @@ func (plugin *EditCommandPlugin) EditTargetCommand(targetCommand *models.Command
 // Get response text of the executed command, based on the errors and progress so far.
 func (plugin *EditCommandPlugin) GetResponseText(
 	command *models.Command, targetCommand *models.Command, channel string, sender *twitch_irc.User,
-	message *twitch_irc.Message, err error) (string, error) {
+	message *twitch_irc.PrivateMessage, err error) (string, error) {
 	// Get response key, build args, get parsed response, and convert it to text
 	responseKey := plugin.GetResponseKey(err)
 	args := []string{targetCommand.Name}
