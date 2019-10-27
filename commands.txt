@@ -1,0 +1,6 @@
+aws dynamodb scan --table-name Bots --endpoint-url http://localhost:8000
+aws dynamodb scan --table-name Channels --endpoint-url http://localhost:8000
+aws dynamodb list-tables --endpoint-url http://localhost:8000
+
+
+mockgen -source=client/client.go -destination=client/mock/client_mock.go

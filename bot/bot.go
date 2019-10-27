@@ -51,10 +51,12 @@ func (bot *TwitchChatBot) Start() {
 	client.OnPrivateMessage(bot.messageHandler.OnPrivateMessage)
 
 	// Join all channels associated with this bot
-	channels := bot.repo.GetAllChannelsForBot(bot.botInfo.TwitchID)
-	for _, channel := range channels {
-		client.Join(channel.Username)
+	channelModels := bot.repo.GetAllChannelsForBot(bot.botInfo.TwitchID)
+	channelNames := make([]string, len(channelModels))
+	for i, channelModel := range channelModels {
+		channelNames[i] = channelModel.Username
 	}
+	client.Join(channelNames...)
 
 	err := client.Connect()
 	if err != nil {

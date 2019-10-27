@@ -19,10 +19,10 @@ const (
 )
 
 var (
-	testSender  = twitch_irc.User{Username: testChannel1, DisplayName: "TestChannel1"}
+	testSender  = twitch_irc.User{Name: testChannel1, DisplayName: "TestChannel1"}
 	testMessage = twitch_irc.PrivateMessage{
-		Text: "Hello this is test message",
-		Tags: map[string]string{},
+		Message: "Hello this is test message",
+		Tags:    map[string]string{},
 	}
 	testArgs    = []string{"testArg"}
 	testCommand = models.Command{

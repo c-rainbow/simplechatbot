@@ -14,6 +14,7 @@ const (
 	// Moderator only
 	PermissionModerator int = 1 << 4
 	// Streamer only. Streamer always has permission by default.
+	// Is this flag really needed?
 	PermissionStreamer int = 1 << 5
 )
 

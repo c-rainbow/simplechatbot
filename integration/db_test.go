@@ -9,8 +9,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/c-rainbow/simplechatbot"
 	"github.com/c-rainbow/simplechatbot/models"
+	"github.com/c-rainbow/simplechatbot/repository"
 	"github.com/guregu/dynamo"
 )
 
@@ -31,14 +31,14 @@ func PreparaeCleanDb() error {
 		return err
 	}
 
-	if !inArray(tableNames, simplechatbot.BotTableName) {
+	if !inArray(tableNames, repository.BotTableName) {
 		// Create Bots table if not exists
-		createTable(db, simplechatbot.BotTableName, &models.Bot{})
+		createTable(db, repository.BotTableName, &models.Bot{})
 	}
 
-	if !inArray(tableNames, simplechatbot.ChannelTableName) {
+	if !inArray(tableNames, repository.ChannelTableName) {
 		// Create Bots table if not exists
-		createTable(db, simplechatbot.ChannelTableName, &models.Channel{})
+		createTable(db, repository.ChannelTableName, &models.Channel{})
 	}
 	return nil
 }
@@ -68,7 +68,7 @@ func inArray(tableNames []string, tableName string) bool {
 
 func TestPut(t *testing.T) {
 	PreparaeCleanDb()
-	repo := &simplechatbot.BaseRepository{}
+	repo := &repository.BaseRepository{}
 
 	// Make sure that no bots exist first
 	bots := repo.GetAllBots()

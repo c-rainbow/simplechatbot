@@ -3,6 +3,7 @@ package helix
 import (
 	"log"
 
+	"github.com/nicklaw5/helix"
 	helix_api "github.com/nicklaw5/helix"
 )
 
@@ -16,12 +17,20 @@ type HelixClientT interface {
 	GetStreams(ids []string, usernames []string) ([]helix_api.Stream, error)
 }
 
+// InnerClientT Interface for inner API client.
+type InnerClientT interface {
+	GetUsers(params *helix_api.UsersParams) (*helix.UsersResponse, error)
+	GetUsersFollows(params *helix_api.UsersFollowsParams) (*helix.UsersFollowsResponse, error)
+	GetStreams(params *helix_api.StreamsParams) (*helix.StreamsResponse, error)
+}
+
 type HelixClient struct {
 	clientID    string
-	innerClient *helix_api.Client
+	innerClient InnerClientT
 }
 
 var _ HelixClientT = (*HelixClient)(nil)
+var _ InnerClientT = (*helix_api.Client)(nil)
 
 func DefaultHelixClient() HelixClientT {
 	return NewHelixClient(DefaultClientID)
