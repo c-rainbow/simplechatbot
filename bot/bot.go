@@ -8,6 +8,7 @@ import (
 	chathandler "github.com/c-rainbow/simplechatbot/chathandler"
 	client "github.com/c-rainbow/simplechatbot/client"
 	models "github.com/c-rainbow/simplechatbot/models"
+	pluginmanager "github.com/c-rainbow/simplechatbot/plugins/chat/manager"
 	repository "github.com/c-rainbow/simplechatbot/repository"
 )
 
@@ -37,9 +38,17 @@ func NewTwitchChatBot(
 	}
 }
 
+func NewTwitchChatBotFromRepsitory(botInfo *models.Bot, baseRepo repository.BaseRepositoryT) TwitchChatBotT {
+	ircClient := client.NewTwitchClient(botInfo.Username, botInfo.OauthToken)
+	botRepo := repository.NewSingleBotRepository(botInfo, baseRepo)
+	pluginManager := pluginmanager.NewChatCommandPluginManager(ircClient, botRepo)
+	handler := chathandler.NewChatMessageHandler(botInfo, botRepo, ircClient, pluginManager)
+	return NewTwitchChatBot(botInfo, ircClient, baseRepo, handler)
+}
+
 func (bot *TwitchChatBot) Start() {
 	client := bot.ircClient
-	client.OnNewMessage(bot.messageHandler.OnNewMessage)
+	client.OnPrivateMessage(bot.messageHandler.OnPrivateMessage)
 
 	// Join all channels associated with this bot
 	channels := bot.repo.GetAllChannelsForBot(bot.botInfo.TwitchID)
@@ -54,9 +63,9 @@ func (bot *TwitchChatBot) Start() {
 }
 
 func (bot *TwitchChatBot) Shutdown() {
-	// TODO: close chans
 	client := bot.ircClient
 
+	// TODO: Is it ok to not store connected channels in memory?
 	channels := bot.repo.GetAllChannelsForBot(bot.botInfo.TwitchID)
 	for _, channel := range channels {
 		client.Depart(channel.Username)

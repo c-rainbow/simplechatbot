@@ -23,11 +23,11 @@ func DeleteAllTables() error {
 	var err error
 
 	// Delete Bots table
-	/*err := db.Table(simplechatbot.BotTableName).DeleteTable().Run()
+	err = db.Table(repository.BotTableName).DeleteTable().Run()
 	if err != nil {
 		fmt.Println("Error while deleting Bots table. ", err.Error())
 		return err
-	}*/
+	}
 
 	// Delete Channels table
 	err = db.Table(repository.ChannelTableName).DeleteTable().Run()

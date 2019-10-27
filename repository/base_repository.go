@@ -23,6 +23,7 @@ var (
 	ErrCommandAlreadyExists = errors.New("Command name already exists")
 	ErrChannelNotFound      = errors.New("Channel is not found")
 	ErrChannelAlreadyExists = errors.New("Channel already exists")
+	ErrBotAlreadyExists     = errors.New("Bot already exists")
 	ErrBotAlreadyInChannel  = errors.New("Bot is already running in the channel")
 )
 
@@ -162,8 +163,8 @@ func (repo *BaseRepository) CreateNewBot(botInfo *models.Bot) error {
 	defer repo.mutex.Unlock()
 	_, err := repo.getBotFromTwitchID(botInfo.TwitchID)
 
-	if err != nil {
-		return err
+	if err == nil {
+		return ErrBotAlreadyExists
 	}
 	botTable := repo.db.Table(BotTableName)
 	return botTable.Put(botInfo).Run()

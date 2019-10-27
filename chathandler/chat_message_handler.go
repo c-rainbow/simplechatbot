@@ -13,7 +13,7 @@ import (
 )
 
 type ChatMessageHandlerT interface {
-	OnNewMessage(channel string, sender twitch_irc.User, message twitch_irc.PrivateMessage)
+	OnPrivateMessage(message twitch_irc.PrivateMessage)
 }
 
 type ChatMessageHandler struct {
@@ -31,18 +31,18 @@ func NewChatMessageHandler(
 	return &ChatMessageHandler{botInfo: botInfo, repo: repo, ircClient: ircClient, chatPluginManager: chatPluginManager}
 }
 
-func (handler *ChatMessageHandler) OnNewMessage(channel string, sender twitch_irc.User, message twitch_irc.PrivateMessage) {
+func (handler *ChatMessageHandler) OnPrivateMessage(message twitch_irc.PrivateMessage) {
 	log.Println("Chat received: ", message.Raw)
 
 	// TODO: Delete this hardcoded quit message.
 	commandName := getCommandName(message.Message)
 	commandName = strings.ToLower(commandName)
-	if commandName == "!quit" && sender.Name == "c_rainbow" {
-		handler.ircClient.Depart(channel)
+	if commandName == "!quit" && message.User.Name == "c_rainbow" {
+		handler.ircClient.Depart(message.Channel)
 		handler.ircClient.Disconnect()
 	}
 
-	handler.chatPluginManager.ProcessChat(channel, &sender, &message)
+	handler.chatPluginManager.ProcessChat(message.Channel, &message.User, &message)
 }
 
 // Gets command name from the full chat text

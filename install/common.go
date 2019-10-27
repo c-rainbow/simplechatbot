@@ -2,6 +2,7 @@ package install
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -77,9 +78,6 @@ func (installer *Installer) Install() error {
 	if err == nil {
 		db, err = installer.TryAccessingDynamoDB(dbConfig)
 	}
-	if true {
-		return nil
-	}
 	if err == nil {
 		// Create Bots table
 		err = db.CreateTable(repository.BotTableName, models.Bot{}).Run()
@@ -89,6 +87,7 @@ func (installer *Installer) Install() error {
 		err = db.CreateTable(repository.ChannelTableName, models.Channel{}).Run()
 	}
 	if err == nil {
+		fmt.Println("Add bot to Bots table")
 		// Add Bot to Bots table
 		baseRepo = repository.NewBaseRepositoryCustomDB(db)
 		err = baseRepo.CreateNewBot(bot)

@@ -6,6 +6,8 @@ import (
 
 	"github.com/c-rainbow/simplechatbot/api/helix"
 	"github.com/c-rainbow/simplechatbot/bot"
+	"github.com/c-rainbow/simplechatbot/botmanager"
+	"github.com/c-rainbow/simplechatbot/botserver"
 	"github.com/c-rainbow/simplechatbot/chathandler"
 	"github.com/c-rainbow/simplechatbot/client"
 	"github.com/c-rainbow/simplechatbot/db/localrun"
@@ -60,16 +62,32 @@ func main11() {
 	}
 }
 
-func main() {
-	flags.ParseAllFlags()
-	if 1 == 1 {
-		return
-	}
-	installer := install.NewInstallerEng()
+func mainInstall() {
+
+	installer := install.NewInstallerKor()
+	fmt.Println("Install start")
 	err := installer.Install()
+	fmt.Println("Install end")
 	if err != nil {
 		fmt.Println("error: ", err.Error())
 	}
+}
+
+func main() {
+	/*flags.ParseAllFlags()
+	localrun.DeleteAllTables()
+	mainInstall()
+
+	if 1 == 1 {
+		return
+	}*/
+
+	flags.ParseAllFlags()
+
+	baseRepo := repository.NewBaseRepository()
+	manager := botmanager.NewBotManagerFromRepository(baseRepo)
+	server := botserver.NewBotServer(nil, manager)
+	server.Start()
 }
 
 // Run bot

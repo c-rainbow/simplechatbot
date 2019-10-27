@@ -17,6 +17,8 @@ const (
 // REST server here
 
 type RestServerT interface {
+	Start()
+	Shutdown()
 }
 
 type RestServer struct {
@@ -46,4 +48,12 @@ func NewRestServer() {
 
 	http.Handle("/", router)
 	log.Fatal(http.ListenAndServe(":80", nil))
+}
+
+func (server *RestServer) Start() {
+
+}
+
+func (server *RestServer) Shutdown() {
+
 }
