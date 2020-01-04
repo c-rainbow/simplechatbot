@@ -3,7 +3,6 @@ package helix
 import (
 	"log"
 
-	"github.com/nicklaw5/helix"
 	helix_api "github.com/nicklaw5/helix"
 )
 
@@ -19,9 +18,9 @@ type HelixClientT interface {
 
 // InnerClientT Interface for inner API client.
 type InnerClientT interface {
-	GetUsers(params *helix_api.UsersParams) (*helix.UsersResponse, error)
-	GetUsersFollows(params *helix_api.UsersFollowsParams) (*helix.UsersFollowsResponse, error)
-	GetStreams(params *helix_api.StreamsParams) (*helix.StreamsResponse, error)
+	GetUsers(params *helix_api.UsersParams) (*helix_api.UsersResponse, error)
+	GetUsersFollows(params *helix_api.UsersFollowsParams) (*helix_api.UsersFollowsResponse, error)
+	GetStreams(params *helix_api.StreamsParams) (*helix_api.StreamsResponse, error)
 }
 
 type HelixClient struct {

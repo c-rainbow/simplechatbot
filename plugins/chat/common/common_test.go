@@ -99,7 +99,7 @@ func TestConvertToResponseSuccess(t *testing.T) {
 
 func TestUserPermissionsStreamer(t *testing.T) {
 	// Streamer always has permission, regardless of command.
-	assert.True(t, UserHasPermission(testSender.Username, nil, &testSender, nil))
+	assert.True(t, UserHasPermission(testSender.Name, nil, &testSender, nil))
 }
 
 func TestUserPermissionsEveryone(t *testing.T) {

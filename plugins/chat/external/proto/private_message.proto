@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package simplechatbot.plugin.external;
+
+import "google/protobuf/any.proto";
+
+
+message PrivateMessage {
+    string channel = 1;
+    string raw_message = 2;
+    Any anything = 3;
+}

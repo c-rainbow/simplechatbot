@@ -5,9 +5,10 @@
 package mock_repository
 
 import (
+	reflect "reflect"
+
 	models "github.com/c-rainbow/simplechatbot/models"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
 // MockSingleBotRepositoryT is a mock of SingleBotRepositoryT interface
