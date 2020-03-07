@@ -4,6 +4,7 @@ import (
 	"strings"
 )
 
+// GetTargetCommandNameAndResponse parses command name and the following arguments from chat message
 func GetTargetCommandNameAndResponse(text string) (string, string) {
 	// TODO: This function does not acknowledge consecutive whitespaces in response text.
 	// For example, if user types "!addcom !hello Welcome  \t  $(user)     here!", then

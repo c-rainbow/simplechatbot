@@ -14,10 +14,12 @@ import (
 )
 
 const (
-	// AddCommandPluginType plugin to add new chat command of CommandResponsePluginType
+	// AddCommandPluginType plugin type name to add new chat command of CommandResponsePluginType
 	AddCommandPluginType = "AddCommandPluginType"
 )
 
+// AddCommandPlugin plugin to add new chat command of CommandResponsePluginType
+// TODO: This plugin is called from chat message, and by default, the added command can be called by everyone.
 type AddCommandPlugin struct {
 	ircClient client.TwitchClientT
 	repo      repository.SingleBotRepositoryT
@@ -25,15 +27,18 @@ type AddCommandPlugin struct {
 
 var _ chatplugins.ChatCommandPluginT = (*AddCommandPlugin)(nil)
 
+// NewAddCommandPlugin creates a new plugin
 func NewAddCommandPlugin(
 	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginT {
 	return &AddCommandPlugin{ircClient: ircClient, repo: repo}
 }
 
+// GetPluginType returns plugin type
 func (plugin *AddCommandPlugin) GetPluginType() string {
 	return AddCommandPluginType
 }
 
+// ReactToChat reacts to chat
 func (plugin *AddCommandPlugin) ReactToChat(
 	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage) {
 	var err error
@@ -44,13 +49,14 @@ func (plugin *AddCommandPlugin) ReactToChat(
 	// TODO: Is it possible to get away from this continuous err == nil check?
 	err = common.ValidateBasicInputs(command, channel, AddCommandPluginType, sender, message)
 	if err == nil {
-		targetCommand, err = plugin.GetTargetCommand(channel, targetCommandName)
+		targetCommand, err = getTargetCommand(channel, targetCommandName, plugin.repo)
 	}
 	if err == nil {
-		err = plugin.ValidateTargetCommand(targetCommand, targetResponse)
+		err = plugin.validateTargetCommand(targetCommand, targetResponse)
 	}
 	if err == nil {
-		// TODO: message.RoomID is integer channel ID. This function will silently fail if chat is from other rooms.
+		// message.RoomID is integer Twitch channel ID. It used to be possible to have multiple rooms in a channel
+		// (therefore multiple roomIDs), but this feature was gone on October 30, 2019.
 		targetCommand, err = plugin.BuildTargetCommand(targetCommandName, targetResponse, message.RoomID)
 	}
 	if err == nil {
@@ -63,16 +69,8 @@ func (plugin *AddCommandPlugin) ReactToChat(
 	common.HandleError(err)
 }
 
-func (plugin *AddCommandPlugin) GetTargetCommand(channel string, targetName string) (*models.Command, error) {
-	if targetName == "" {
-		return nil, chatplugins.ErrNotEnoughArguments
-	}
-	targetCommand := plugin.repo.GetCommandByChannelAndName(channel, targetName)
-	return targetCommand, nil
-}
-
 // This function is slightly different between add/edit/delete command. Hard to merge into a common function.
-func (plugin *AddCommandPlugin) ValidateTargetCommand(targetCommand *models.Command, targetResponse string) error {
+func (plugin *AddCommandPlugin) validateTargetCommand(targetCommand *models.Command, targetResponse string) error {
 	// Can't add already existing command
 	if targetCommand != nil {
 		return chatplugins.ErrTargetCommandAlreadyExists
@@ -83,7 +81,7 @@ func (plugin *AddCommandPlugin) ValidateTargetCommand(targetCommand *models.Comm
 	return nil
 }
 
-// Only needed for AddCommand
+// BuildTargetCommand builds command model from name. Only needed for AddCommand
 func (plugin *AddCommandPlugin) BuildTargetCommand(
 	targetCommandName string, targetResponse string, channelIDStr string) (*models.Command, error) {
 	// Convert channelIDstr to int
@@ -103,6 +101,7 @@ func (plugin *AddCommandPlugin) BuildTargetCommand(
 	}
 
 	// TODO: Find a nice, descriptive failure message.
+	// TODO: dynamically get failure message from context (channel language, etc)
 	failureRespopnse := parser.ParseResponse(chatplugins.DefaultFailureMessage)
 	err = parser.Validate(failureRespopnse)
 	if err != nil {
@@ -117,7 +116,7 @@ func (plugin *AddCommandPlugin) BuildTargetCommand(
 	return targetCommand, nil
 }
 
-// Get response text of the executed command, based on the errors and progress so far.
+// GetResponseText gets response text of the executed command, based on the errors and progress so far.
 func (plugin *AddCommandPlugin) GetResponseText(
 	command *models.Command, targetCommand *models.Command, channel string, sender *twitch_irc.User,
 	message *twitch_irc.PrivateMessage, err error) (string, error) {
@@ -130,6 +129,7 @@ func (plugin *AddCommandPlugin) GetResponseText(
 	return common.ConvertToResponseText(command, responseKey, channel, sender, message, args)
 }
 
+// GetResponseKey returns response key from error type to build response text accordingly.
 func (plugin *AddCommandPlugin) GetResponseKey(err error) string {
 	// Normal case.
 	if err == nil {
@@ -148,8 +148,6 @@ func (plugin *AddCommandPlugin) GetResponseKey(err error) string {
 		to see which error is connected to which message key.
 	*/
 	switch err {
-	case chatplugins.ErrCommandNotFound: // Command name is not found. Likely syncronization issue
-		fallthrough
 	case chatplugins.ErrNoPermission: // User has no permission
 		fallthrough
 	case chatplugins.ErrNotEnoughArguments: // Arguments

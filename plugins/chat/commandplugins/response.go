@@ -11,10 +11,11 @@ import (
 )
 
 const (
+	// CommandResponsePluginType plugin type name to respond to a chat command
 	CommandResponsePluginType = "CommandResponsePluginType"
 )
 
-// Plugin that responds to user-defined chat commands.
+// CommandResponsePlugin plugin that responds to user-defined chat commands.
 type CommandResponsePlugin struct {
 	ircClient client.TwitchClientT
 	repo      repository.SingleBotRepositoryT
@@ -22,15 +23,18 @@ type CommandResponsePlugin struct {
 
 var _ chatplugins.ChatCommandPluginT = (*CommandResponsePlugin)(nil)
 
+// NewCommandResponsePlugin creates a new CommandResponsePlugin
 func NewCommandResponsePlugin(
 	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginT {
 	return &CommandResponsePlugin{ircClient: ircClient, repo: repo}
 }
 
+// GetPluginType gets plugin type
 func (plugin *CommandResponsePlugin) GetPluginType() string {
 	return CommandResponsePluginType
 }
 
+// ReactToChat reacts to chat
 func (plugin *CommandResponsePlugin) ReactToChat(
 	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage) {
 	// Basic validations
@@ -42,6 +46,7 @@ func (plugin *CommandResponsePlugin) ReactToChat(
 	common.HandleError(err)
 }
 
+// GetResponseText gets response text of the executed command, based on the errors and progress so far.
 func (plugin *CommandResponsePlugin) GetResponseText(
 	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage,
 	err error) (string, error) {
@@ -51,6 +56,7 @@ func (plugin *CommandResponsePlugin) GetResponseText(
 	return common.ConvertToResponseText(command, responseKey, channel, sender, message, args)
 }
 
+// GetResponseKey returns response key from error type to build response text accordingly.
 func (plugin *CommandResponsePlugin) GetResponseKey(err error) string {
 	// Normal case.
 	if err == nil {

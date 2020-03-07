@@ -14,10 +14,11 @@ import (
 )
 
 const (
+	// ListCommandsPluginType plugin type name to list existing commands
 	ListCommandsPluginType = "ListCommandsPluginType"
 )
 
-// Plugin that responds to user-defined chat commands.
+// ListCommandsPlugin plugin to list all chat commands
 type ListCommandsPlugin struct {
 	ircClient client.TwitchClientT
 	repo      repository.SingleBotRepositoryT
@@ -25,15 +26,18 @@ type ListCommandsPlugin struct {
 
 var _ chatplugins.ChatCommandPluginT = (*ListCommandsPlugin)(nil)
 
+// NewListCommandsPlugin creates a new ListCommandsPlugin
 func NewListCommandsPlugin(
 	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginT {
 	return &ListCommandsPlugin{ircClient: ircClient, repo: repo}
 }
 
+// GetPluginType gets plugin type
 func (plugin *ListCommandsPlugin) GetPluginType() string {
 	return ListCommandsPluginType
 }
 
+// ReactToChat reacts to chat
 func (plugin *ListCommandsPlugin) ReactToChat(
 	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage) {
 	var targetCommands []*models.Command
@@ -48,16 +52,17 @@ func (plugin *ListCommandsPlugin) ReactToChat(
 	common.HandleError(err)
 }
 
-// Get response text of the executed command, based on the errors and progress so far.
+// GetResponseText gets response text of the executed command, based on the errors and progress so far.
 func (plugin *ListCommandsPlugin) GetResponseText(
 	command *models.Command, targetCommands []*models.Command, channel string, sender *twitch_irc.User,
 	message *twitch_irc.PrivateMessage, err error) (string, error) {
 	// Get response key, build args, get parsed response, and convert it to text
 	responseKey := plugin.GetResponseKey(err)
-	args := []string{plugin.GetSortedCommandNames(targetCommands)}
+	args := []string{plugin.getSortedCommandNames(targetCommands)}
 	return common.ConvertToResponseText(command, responseKey, channel, sender, message, args)
 }
 
+// GetResponseKey returns response key from error type to build response text accordingly.
 func (plugin *ListCommandsPlugin) GetResponseKey(err error) string {
 	// Normal case.
 	if err == nil {
@@ -74,7 +79,7 @@ func (plugin *ListCommandsPlugin) GetResponseKey(err error) string {
 	}
 }
 
-func (plugin *ListCommandsPlugin) GetSortedCommandNames(commands []*models.Command) string {
+func (plugin *ListCommandsPlugin) getSortedCommandNames(commands []*models.Command) string {
 	commandNames := make([]string, len(commands))
 	for i, command := range commands {
 		commandNames[i] = command.Name

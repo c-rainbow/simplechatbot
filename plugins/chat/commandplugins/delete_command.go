@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	// DeleteCommandPluginType plugin to delete an existing command of CommandResponsePluginType
+	// DeleteCommandPluginType plugin type name to delete an existing command (of any type)
 	DeleteCommandPluginType = "DeleteCommandPluginType"
 )
 
+// DeleteCommandPlugin to delete an existing command (of any type)
 type DeleteCommandPlugin struct {
 	ircClient client.TwitchClientT
 	repo      repository.SingleBotRepositoryT
@@ -21,15 +22,18 @@ type DeleteCommandPlugin struct {
 
 var _ chatplugins.ChatCommandPluginT = (*DeleteCommandPlugin)(nil)
 
+// NewDeleteCommandPlugin creates a new DeleteCommandPlugin
 func NewDeleteCommandPlugin(
 	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginT {
 	return &DeleteCommandPlugin{ircClient: ircClient, repo: repo}
 }
 
+// GetPluginType returns plugin type
 func (plugin *DeleteCommandPlugin) GetPluginType() string {
 	return DeleteCommandPluginType
 }
 
+// ReactToChat reacts to chat
 func (plugin *DeleteCommandPlugin) ReactToChat(
 	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage) {
 	var err error
@@ -40,10 +44,10 @@ func (plugin *DeleteCommandPlugin) ReactToChat(
 	// TODO: Is it possible to get away from this continuous err == nil check?
 	err = common.ValidateBasicInputs(command, channel, DeleteCommandPluginType, sender, message)
 	if err == nil {
-		targetCommand, err = plugin.GetTargetCommand(channel, targetCommandName)
+		targetCommand, err = getTargetCommand(channel, targetCommandName, plugin.repo)
 	}
 	if err == nil {
-		err = plugin.ValidateTargetCommand(targetCommand)
+		err = plugin.validateTargetCommand(targetCommand)
 	}
 	if err == nil {
 		err = plugin.repo.DeleteCommand(channel, targetCommand)
@@ -55,16 +59,8 @@ func (plugin *DeleteCommandPlugin) ReactToChat(
 	common.HandleError(err)
 }
 
-func (plugin *DeleteCommandPlugin) GetTargetCommand(channel string, targetName string) (*models.Command, error) {
-	if targetName == "" {
-		return nil, chatplugins.ErrNotEnoughArguments
-	}
-	targetCommand := plugin.repo.GetCommandByChannelAndName(channel, targetName)
-	return targetCommand, nil
-}
-
 // This function is slightly different between add/edit/delete command. Hard to merge into a common function.
-func (plugin *DeleteCommandPlugin) ValidateTargetCommand(targetCommand *models.Command) error {
+func (plugin *DeleteCommandPlugin) validateTargetCommand(targetCommand *models.Command) error {
 	// Can't delete non-existing command
 	if targetCommand == nil {
 		return chatplugins.ErrTargetCommandNotFound
@@ -72,7 +68,7 @@ func (plugin *DeleteCommandPlugin) ValidateTargetCommand(targetCommand *models.C
 	return nil
 }
 
-// Get response text of the executed command, based on the errors and progress so far.
+// GetResponseText gets response text of the executed command, based on the errors and progress so far.
 func (plugin *DeleteCommandPlugin) GetResponseText(
 	command *models.Command, targetCommand *models.Command, channel string, sender *twitch_irc.User,
 	message *twitch_irc.PrivateMessage, err error) (string, error) {
@@ -82,6 +78,7 @@ func (plugin *DeleteCommandPlugin) GetResponseText(
 	return common.ConvertToResponseText(command, responseKey, channel, sender, message, args)
 }
 
+// GetResponseKey returns response key from error type to build response text accordingly.
 func (plugin *DeleteCommandPlugin) GetResponseKey(err error) string {
 	// Normal case.
 	if err == nil {
