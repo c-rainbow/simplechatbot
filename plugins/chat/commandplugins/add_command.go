@@ -14,28 +14,9 @@ import (
 )
 
 const (
+	// AddCommandPluginType plugin to add new chat command of CommandResponsePluginType
 	AddCommandPluginType = "AddCommandPluginType"
 )
-
-type AddCommandPluginFactoryT struct {
-	ircClient client.TwitchClientT
-	repo      repository.SingleBotRepositoryT
-}
-
-var _ chatplugins.ChatCommandPluginFactoryT = (*AddCommandPluginFactoryT)(nil)
-
-func NewAddCommandPluginFactory(
-	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginFactoryT {
-	return &AddCommandPluginFactoryT{ircClient: ircClient, repo: repo}
-}
-
-func (plugin *AddCommandPluginFactoryT) GetPluginType() string {
-	return AddCommandPluginType
-}
-
-func (plugin *AddCommandPluginFactoryT) BuildNewPlugin() chatplugins.ChatCommandPluginT {
-	return NewAddCommandPlugin(plugin.ircClient, plugin.repo)
-}
 
 type AddCommandPlugin struct {
 	ircClient client.TwitchClientT

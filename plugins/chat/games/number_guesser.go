@@ -50,26 +50,6 @@ var (
 	MessageGameAlreadyEnded   = "게임이 진행중이 아닙니다. " + MessageUsageBeforeGame
 )
 
-type NumberGuesserPluginFactory struct {
-	ircClient client.TwitchClientT
-	repo      repository.SingleBotRepositoryT
-}
-
-var _ chatplugins.ChatCommandPluginFactoryT = (*NumberGuesserPluginFactory)(nil)
-
-func NewNumberGuesserPluginFactory(
-	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginFactoryT {
-	return &NumberGuesserPluginFactory{ircClient: ircClient, repo: repo}
-}
-
-func (plugin *NumberGuesserPluginFactory) GetPluginType() string {
-	return NumberGuesserPluginType
-}
-
-func (plugin *NumberGuesserPluginFactory) BuildNewPlugin() chatplugins.ChatCommandPluginT {
-	return NewNumberGuesserPlugin(plugin.ircClient, plugin.repo)
-}
-
 // Plugin that responds to user-defined chat commands.
 type NumberGuesserPlugin struct {
 	ircClient  client.TwitchClientT

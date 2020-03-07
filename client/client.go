@@ -6,7 +6,7 @@ import (
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
 
-// General interface for Twitch IRC client
+// TwitchClientT is the general interface for Twitch IRC client
 // TOOD: Function signature of OnPrivateMessage is currently tied to go-twitch-irc library.
 type TwitchClientT interface {
 	Connect() error

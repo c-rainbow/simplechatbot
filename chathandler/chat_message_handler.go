@@ -12,27 +12,35 @@ import (
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
 
+// ChatMessageHandlerT is the general interface for chat message handler
 type ChatMessageHandlerT interface {
 	OnPrivateMessage(message twitch_irc.PrivateMessage)
 }
 
+// ChatMessageHandler chat message handler for a bot
 type ChatMessageHandler struct {
-	botInfo           *models.Bot
-	repo              repository.SingleBotRepositoryT
-	ircClient         client.TwitchClientT
-	chatPluginManager pluginmanager.ChatCommandPluginManagerT
+	botInfo                  *models.Bot
+	repo                     repository.SingleBotRepositoryT
+	ircClient                client.TwitchClientT
+	chatCommandPluginManager pluginmanager.ChatCommandPluginManagerT
 }
 
 var _ ChatMessageHandlerT = (*ChatMessageHandler)(nil)
 
+// NewChatMessageHandler creates new handler
 func NewChatMessageHandler(
 	botInfo *models.Bot, repo repository.SingleBotRepositoryT, ircClient client.TwitchClientT,
-	chatPluginManager pluginmanager.ChatCommandPluginManagerT) *ChatMessageHandler {
-	return &ChatMessageHandler{botInfo: botInfo, repo: repo, ircClient: ircClient, chatPluginManager: chatPluginManager}
+	chatCommandPluginManager pluginmanager.ChatCommandPluginManagerT) *ChatMessageHandler {
+	return &ChatMessageHandler{botInfo: botInfo, repo: repo, ircClient: ircClient,
+		chatCommandPluginManager: chatCommandPluginManager}
 }
 
+// OnPrivateMessage handles PRIVMSG
 func (handler *ChatMessageHandler) OnPrivateMessage(message twitch_irc.PrivateMessage) {
 	log.Println("Chat received: ", message.Raw)
+
+	// TODO: Do the entire process in a separate goroutine
+	// This OnPrivate Message may take a bit longer when spamcheck & etc are added.
 
 	// TODO: Delete this hardcoded quit message.
 	commandName := getCommandName(message.Message)
@@ -42,7 +50,7 @@ func (handler *ChatMessageHandler) OnPrivateMessage(message twitch_irc.PrivateMe
 		handler.ircClient.Disconnect()
 	}
 
-	handler.chatPluginManager.ProcessChat(message.Channel, &message.User, &message)
+	handler.chatCommandPluginManager.ProcessChat(message.Channel, &message.User, &message)
 }
 
 // Gets command name from the full chat text

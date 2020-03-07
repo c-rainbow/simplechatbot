@@ -20,27 +20,6 @@ const (
 // TODO: Build JSON from message, as minimal as possible
 // TODO: Parse JSON from response from external call.
 
-type ExternalCallPluginFactory struct {
-	// External Service Address
-	address   string
-	ircClient client.TwitchClientT
-}
-
-var _ chatplugins.ChatCommandPluginFactoryT = (*ExternalCallPluginFactory)(nil)
-
-func NewExternalCallPluginFactory(
-	ircClient client.TwitchClientT) chatplugins.ChatCommandPluginFactoryT {
-	return &ExternalCallPluginFactory{ircClient: ircClient}
-}
-
-func (plugin *ExternalCallPluginFactory) GetPluginType() string {
-	return ExternalCallPluginType
-}
-
-func (plugin *ExternalCallPluginFactory) BuildNewPlugin() chatplugins.ChatCommandPluginT {
-	return NewExternalCallPlugin(plugin.ircClient)
-}
-
 // Plugin that responds to user-defined chat commands.
 type ExternalCallPlugin struct {
 	ircClient client.TwitchClientT

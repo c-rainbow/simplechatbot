@@ -31,25 +31,6 @@ var (
 	}
 )
 
-type DicePluginFactory struct {
-	ircClient client.TwitchClientT
-}
-
-var _ chatplugins.ChatCommandPluginFactoryT = (*DicePluginFactory)(nil)
-
-func NewDicePluginFactory(
-	ircClient client.TwitchClientT) chatplugins.ChatCommandPluginFactoryT {
-	return &DicePluginFactory{ircClient: ircClient}
-}
-
-func (plugin *DicePluginFactory) GetPluginType() string {
-	return DicePluginType
-}
-
-func (plugin *DicePluginFactory) BuildNewPlugin() chatplugins.ChatCommandPluginT {
-	return NewDicePlugin(plugin.ircClient)
-}
-
 // Plugin that responds to user-defined chat commands.
 type DicePlugin struct {
 	ircClient client.TwitchClientT

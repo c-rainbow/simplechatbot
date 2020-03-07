@@ -19,8 +19,3 @@ type ChatCommandPluginT interface {
 	GetPluginType() string
 	ReactToChat(command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage)
 }
-
-type ChatCommandPluginFactoryT interface {
-	GetPluginType() string
-	BuildNewPlugin() ChatCommandPluginT
-}

@@ -17,26 +17,6 @@ const (
 	ListCommandsPluginType = "ListCommandsPluginType"
 )
 
-type ListCommandsPluginFactory struct {
-	ircClient client.TwitchClientT
-	repo      repository.SingleBotRepositoryT
-}
-
-var _ chatplugins.ChatCommandPluginFactoryT = (*ListCommandsPluginFactory)(nil)
-
-func NewListCommandsPluginFactory(
-	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginFactoryT {
-	return &ListCommandsPluginFactory{ircClient: ircClient, repo: repo}
-}
-
-func (plugin *ListCommandsPluginFactory) GetPluginType() string {
-	return ListCommandsPluginType
-}
-
-func (plugin *ListCommandsPluginFactory) BuildNewPlugin() chatplugins.ChatCommandPluginT {
-	return NewListCommandsPlugin(plugin.ircClient, plugin.repo)
-}
-
 // Plugin that responds to user-defined chat commands.
 type ListCommandsPlugin struct {
 	ircClient client.TwitchClientT

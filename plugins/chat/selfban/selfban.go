@@ -16,24 +16,6 @@ const (
 	DefaultBanSeconds = 3
 )
 
-type SelfBanPluginFactory struct {
-	ircClient client.TwitchClientT
-}
-
-var _ chatplugins.ChatCommandPluginFactoryT = (*SelfBanPluginFactory)(nil)
-
-func NewSelfBanPluginFactory(ircClient client.TwitchClientT) chatplugins.ChatCommandPluginFactoryT {
-	return &SelfBanPluginFactory{ircClient: ircClient}
-}
-
-func (plugin *SelfBanPluginFactory) GetPluginType() string {
-	return SelfBanPluginType
-}
-
-func (plugin *SelfBanPluginFactory) BuildNewPlugin() chatplugins.ChatCommandPluginT {
-	return NewSelfBanPlugin(plugin.ircClient)
-}
-
 type SelfBanPlugin struct {
 	ircClient client.TwitchClientT
 	repo      repository.SingleBotRepositoryT

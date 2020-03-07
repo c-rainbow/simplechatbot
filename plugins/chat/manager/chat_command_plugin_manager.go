@@ -29,7 +29,7 @@ polling from the channel until it closes.
 */
 
 type ChatCommandPluginManagerT interface {
-	RegisterPlugin(factory chatplugins.ChatCommandPluginFactoryT, count int)
+	RegisterPlugin(plugin chatplugins.ChatCommandPluginT)
 	ProcessChat(channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage)
 	Close()
 }
@@ -54,22 +54,21 @@ func NewChatCommandPluginManager(
 	manager := ChatCommandPluginManager{
 		channelMapMutex: sync.Mutex{}, repo: repo, chanMap: make(map[string]chan WorkItem)}
 
-	manager.RegisterPlugin(commandplugins.NewAddCommandPluginFactory(ircClient, repo), 1)
-	manager.RegisterPlugin(commandplugins.NewDeleteCommandPluginFactory(ircClient, repo), 1)
-	manager.RegisterPlugin(commandplugins.NewEditCommandPluginFactory(ircClient, repo), 1)
-	manager.RegisterPlugin(commandplugins.NewListCommandsPluginFactory(ircClient, repo), 1)
-	manager.RegisterPlugin(commandplugins.NewCommandResponsePluginFactory(ircClient, repo), 1)
-	manager.RegisterPlugin(games.NewNumberGuesserPluginFactory(ircClient, repo), 1)
-	manager.RegisterPlugin(selfban.NewSelfBanPluginFactory(ircClient), 1)
-	manager.RegisterPlugin(games.NewDicePluginFactory(ircClient), 1)
+	manager.RegisterPlugin(commandplugins.NewAddCommandPlugin(ircClient, repo))
+	manager.RegisterPlugin(commandplugins.NewDeleteCommandPlugin(ircClient, repo))
+	manager.RegisterPlugin(commandplugins.NewEditCommandPlugin(ircClient, repo))
+	manager.RegisterPlugin(commandplugins.NewListCommandsPlugin(ircClient, repo))
+	manager.RegisterPlugin(commandplugins.NewCommandResponsePlugin(ircClient, repo))
+	manager.RegisterPlugin(games.NewNumberGuesserPlugin(ircClient, repo))
+	manager.RegisterPlugin(selfban.NewSelfBanPlugin(ircClient))
+	manager.RegisterPlugin(games.NewDicePlugin(ircClient))
 
 	return &manager
 }
 
-func (manager *ChatCommandPluginManager) RegisterPlugin(
-	factory chatplugins.ChatCommandPluginFactoryT, count int) {
+func (manager *ChatCommandPluginManager) RegisterPlugin(plugin chatplugins.ChatCommandPluginT) {
 	// Create job channel per plugin type
-	pluginType := factory.GetPluginType()
+	pluginType := plugin.GetPluginType()
 	manager.channelMapMutex.Lock()
 	jobChannel, exists := manager.chanMap[pluginType]
 	if !exists { // Means that the same type of plugin was already registered, and more is being added.
@@ -79,14 +78,11 @@ func (manager *ChatCommandPluginManager) RegisterPlugin(
 	manager.channelMapMutex.Unlock()
 
 	// The goroutine will automatically close when jobChannel is closed
-	for i := 0; i < count; i++ {
-		plugin := factory.BuildNewPlugin()
-		go func() {
-			for workItem := range jobChannel {
-				plugin.ReactToChat(workItem.command, workItem.channel, workItem.sender, workItem.message)
-			}
-		}()
-	}
+	go func() {
+		for workItem := range jobChannel {
+			plugin.ReactToChat(workItem.command, workItem.channel, workItem.sender, workItem.message)
+		}
+	}()
 }
 
 func (manager *ChatCommandPluginManager) ProcessChat(

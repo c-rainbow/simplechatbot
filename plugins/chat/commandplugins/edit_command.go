@@ -17,26 +17,6 @@ const (
 	EditCommandPluginType = "EditCommandPluginType"
 )
 
-type EditCommandPluginFactory struct {
-	ircClient client.TwitchClientT
-	repo      repository.SingleBotRepositoryT
-}
-
-var _ chatplugins.ChatCommandPluginFactoryT = (*EditCommandPluginFactory)(nil)
-
-func NewEditCommandPluginFactory(
-	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginFactoryT {
-	return &EditCommandPluginFactory{ircClient: ircClient, repo: repo}
-}
-
-func (plugin *EditCommandPluginFactory) GetPluginType() string {
-	return EditCommandPluginType
-}
-
-func (plugin *EditCommandPluginFactory) BuildNewPlugin() chatplugins.ChatCommandPluginT {
-	return NewEditCommandPlugin(plugin.ircClient, plugin.repo)
-}
-
 type EditCommandPlugin struct {
 	ircClient client.TwitchClientT
 	repo      repository.SingleBotRepositoryT
