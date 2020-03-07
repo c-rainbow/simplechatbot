@@ -29,28 +29,30 @@ During game, bot responses with one of "higher than [number]", "smaller than [nu
 */
 
 const (
+	// NumberGuesserPluginType plugin type name to guess numbers
 	NumberGuesserPluginType = "NumberGuesserPluginType"
-	MaxNumber               = 100
-	StartCommand            = "시작"
-	EndCommand              = "종료"
-	StatusRunning           = 1
-	StatusStopped           = 0
+
+	maxNumber     = 100
+	startCommand  = "시작"
+	endCommand    = "종료"
+	statusRunning = 1
+	statusStopped = 0
 )
 
 var (
 	// Below are bot's response messages in various situations
-	MessageUsageBeforeGame    = "채팅창에 '!숫자 시작' 이라고 입력하여 게임을 시작할 수 있습니다"
-	MessageUsageInGame        = "채팅창에 '!숫자 [숫자]' 라고 입력하여 1부터 $(arg1) 사이 제가 생각하는 숫자를 맞춰보세요"
-	MessageGameStarted        = "게임이 시작되었습니다. " + MessageUsageInGame
-	MessageGameAlreadyStarted = "이미 " + MessageGameStarted
-	MessageLowerThanThat      = "$(arg0) 보다 작습니다"
-	MessageHigherThanThat     = "$(arg0) 보다 큽니다"
-	MessageCorrect            = "$(user)님 정답! 정답은 $(arg0)이었습니다. 게임을 종료합니다"
-	MessageGameEnded          = "게임을 종료합니다."
-	MessageGameAlreadyEnded   = "게임이 진행중이 아닙니다. " + MessageUsageBeforeGame
+	messageUsageBeforeGame    = "채팅창에 '!숫자 시작' 이라고 입력하여 게임을 시작할 수 있습니다"
+	messageUsageInGame        = "채팅창에 '!숫자 [숫자]' 라고 입력하여 1부터 $(arg1) 사이 제가 생각하는 숫자를 맞춰보세요"
+	messageGameStarted        = "게임이 시작되었습니다. " + messageUsageInGame
+	messageGameAlreadyStarted = "이미 " + messageGameStarted
+	messageLowerThanThat      = "$(arg0) 보다 작습니다"
+	messageHigherThanThat     = "$(arg0) 보다 큽니다"
+	messageCorrect            = "$(user)님 정답! 정답은 $(arg0)이었습니다. 게임을 종료합니다"
+	messageGameEnded          = "게임을 종료합니다."
+	messageGameAlreadyEnded   = "게임이 진행중이 아닙니다. " + messageUsageBeforeGame
 )
 
-// Plugin that responds to user-defined chat commands.
+// NumberGuesserPlugin a game plugin that
 type NumberGuesserPlugin struct {
 	ircClient  client.TwitchClientT
 	repo       repository.SingleBotRepositoryT
@@ -62,23 +64,26 @@ type NumberGuesserPlugin struct {
 
 var _ chatplugins.ChatCommandPluginT = (*NumberGuesserPlugin)(nil)
 
+// NewNumberGuesserPlugin creates a new NumberGuesserPlugin
 func NewNumberGuesserPlugin(
 	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) chatplugins.ChatCommandPluginT {
 	return &NumberGuesserPlugin{ircClient: ircClient, repo: repo, mutex: sync.Mutex{}}
 }
 
+// GetPluginType gets plugin type
 func (plugin *NumberGuesserPlugin) GetPluginType() string {
 	return NumberGuesserPluginType
 }
 
+// ReactToChat reacts to chat
 func (plugin *NumberGuesserPlugin) ReactToChat(
 	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage) {
 	responseText := ""
 	err := common.ValidateBasicInputs(command, channel, NumberGuesserPluginType, sender, message)
 	if err == nil {
-		args := plugin.ParseArguments(message.Message)
+		args := plugin.parseArguments(message.Message)
 
-		response := plugin.ProcessArgument(args, sender)
+		response := plugin.processArgument(args, sender)
 		// Parse the response message from above
 		parsedResponse := parser.ParseResponse(response)
 
@@ -98,7 +103,7 @@ func (plugin *NumberGuesserPlugin) ReactToChat(
 
 }
 
-func (plugin *NumberGuesserPlugin) ParseArguments(text string) []string {
+func (plugin *NumberGuesserPlugin) parseArguments(text string) []string {
 	fields := strings.Fields(text)
 
 	switch len(fields) {
@@ -111,32 +116,31 @@ func (plugin *NumberGuesserPlugin) ParseArguments(text string) []string {
 	}
 }
 
-func (plugin *NumberGuesserPlugin) ProcessArgument(args []string, sender *twitch_irc.User) string {
+func (plugin *NumberGuesserPlugin) processArgument(args []string, sender *twitch_irc.User) string {
 	plugin.mutex.Lock()
 	defer plugin.mutex.Unlock()
 
-	if plugin.status == StatusRunning {
-		return plugin.ProcessInGameCommands(args)
-	} else {
-		return plugin.ProcessNotInGameCommands(args)
+	if plugin.status == statusRunning {
+		return plugin.processInGameCommands(args)
 	}
+	return plugin.processNotInGameCommands(args)
 }
 
 // What to do while game is being played
-func (plugin *NumberGuesserPlugin) ProcessInGameCommands(args []string) string {
+func (plugin *NumberGuesserPlugin) processInGameCommands(args []string) string {
 	mainArg := args[0]
 	toSay := ""
 
 	switch mainArg {
 
 	// Duplicate start command. Show usage and ignore
-	case StartCommand:
-		toSay = MessageGameAlreadyStarted
+	case startCommand:
+		toSay = messageGameAlreadyStarted
 
 	// End command. End the game.
-	case EndCommand:
-		toSay = MessageGameEnded
-		plugin.status = StatusStopped
+	case endCommand:
+		toSay = messageGameEnded
+		plugin.status = statusStopped
 
 	// Hopefully the chatter entered a valid number
 	default:
@@ -150,45 +154,45 @@ func (plugin *NumberGuesserPlugin) ProcessInGameCommands(args []string) string {
 		}
 		if err == nil && 1 <= num && num <= currentMaxFloat {
 			if num < answerFloat { // answer higher than number
-				toSay = MessageHigherThanThat
+				toSay = messageHigherThanThat
 			} else if num > answerFloat { // answer lower than number
-				toSay = MessageLowerThanThat
+				toSay = messageLowerThanThat
 			} else { // correct!
-				toSay = MessageCorrect
-				plugin.status = StatusStopped
+				toSay = messageCorrect
+				plugin.status = statusStopped
 			}
 		} else {
 			// Invalid number. Just show usage
-			toSay = MessageUsageInGame
+			toSay = messageUsageInGame
 		}
 	}
 	return toSay
 }
 
 // What to do when game is not being played
-func (plugin *NumberGuesserPlugin) ProcessNotInGameCommands(args []string) string {
+func (plugin *NumberGuesserPlugin) processNotInGameCommands(args []string) string {
 	mainArg := args[0]
 	toSay := ""
 
 	switch mainArg {
 
 	// Start the game.
-	case StartCommand:
-		toSay = MessageGameStarted
+	case startCommand:
+		toSay = messageGameStarted
 		// Check if user provided custom max number
-		maxNum := MaxNumber
+		maxNum := maxNumber
 		maxNum, err := strconv.Atoi(args[1])
 		if err != nil {
-			maxNum = MaxNumber
+			maxNum = maxNumber
 		}
 		// Set values for new game
 		plugin.currentMax = maxNum
 		plugin.answer = rand.Intn(maxNum) + 1
-		plugin.status = StatusRunning
+		plugin.status = statusRunning
 
 	// While not in game, anything other than start command is invalid.
 	default:
-		toSay = MessageGameAlreadyEnded
+		toSay = messageGameAlreadyEnded
 	}
 	return toSay
 }

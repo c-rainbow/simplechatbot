@@ -12,60 +12,64 @@ import (
 )
 
 const (
-	SelfBanPluginType = "SelfBanPluginType"
-	DefaultBanSeconds = 3
+	// BanOneselfPluginType plugin type name to enable chatters to ban themselves
+	BanOneselfPluginType = "BanOneselfPluginType"
+	defaultBanSeconds    = 3
 )
 
-type SelfBanPlugin struct {
+// BanOneselfPlugin plugin to enable chatters to ban themselves
+type BanOneselfPlugin struct {
 	ircClient client.TwitchClientT
 	repo      repository.SingleBotRepositoryT
 }
 
-var _ chatplugins.ChatCommandPluginT = (*SelfBanPlugin)(nil)
+var _ chatplugins.ChatCommandPluginT = (*BanOneselfPlugin)(nil)
 
-func NewSelfBanPlugin(ircClient client.TwitchClientT) chatplugins.ChatCommandPluginT {
-	return &SelfBanPlugin{ircClient: ircClient}
+// NewBanOneselfPlugin creates a new BanOneselfPlugin
+func NewBanOneselfPlugin(ircClient client.TwitchClientT) chatplugins.ChatCommandPluginT {
+	return &BanOneselfPlugin{ircClient: ircClient}
 }
 
-func (plugin *SelfBanPlugin) GetPluginType() string {
-	return SelfBanPluginType
+// GetPluginType get splugin type
+func (plugin *BanOneselfPlugin) GetPluginType() string {
+	return BanOneselfPluginType
 }
 
-func (plugin *SelfBanPlugin) ReactToChat(
+// ReactToChat reacts to chat
+func (plugin *BanOneselfPlugin) ReactToChat(
 	command *models.Command, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage) {
 	var banTime int
 	// TODO: Is it possible to get away from this continuous err == nil check?
-	err := common.ValidateBasicInputs(command, channel, SelfBanPluginType, sender, message)
+	err := common.ValidateBasicInputs(command, channel, BanOneselfPluginType, sender, message)
 	if err == nil {
 		//banTime, err := plugin.ParseTime(message.Message)
-		banTime = DefaultBanSeconds
+		banTime = defaultBanSeconds
 	}
 	if err != nil {
-		banTime = DefaultBanSeconds
+		banTime = defaultBanSeconds
 	}
 
-	responseText, err := plugin.GetResponseText(command, channel, banTime, sender, message, err)
+	responseText, err := plugin.getResponseText(command, channel, banTime, sender, message, err)
 
-	plugin.TryBanUser(channel, sender, banTime, responseText)
+	plugin.tryBanUser(channel, sender, banTime, responseText)
 	common.HandleError(err)
 }
 
-func (plugin *SelfBanPlugin) TryBanUser(channel string, sender *twitch_irc.User, banTime int, responseText string) {
+func (plugin *BanOneselfPlugin) tryBanUser(channel string, sender *twitch_irc.User, banTime int, responseText string) {
 	plugin.ircClient.Say(channel, "/timeout "+sender.Name+" "+strconv.Itoa(banTime))
-	plugin.ircClient.Say(channel, responseText)
 }
 
 // Get response text of the executed command, based on the errors and progress so far.
-func (plugin *SelfBanPlugin) GetResponseText(
+func (plugin *BanOneselfPlugin) getResponseText(
 	command *models.Command, channel string, banTime int, sender *twitch_irc.User, message *twitch_irc.PrivateMessage,
 	err error) (string, error) {
 
 	// Get response key, build args, get parsed response, and convert it to text
-	responseKey := plugin.GetResponseKey(err)
+	responseKey := plugin.getResponseKey(err)
 	return common.ConvertToResponseText(command, responseKey, channel, sender, message, nil)
 }
 
-func (plugin *SelfBanPlugin) GetResponseKey(err error) string {
+func (plugin *BanOneselfPlugin) getResponseKey(err error) string {
 	// Normal case.
 	if err == nil {
 		return models.DefaultResponseKey

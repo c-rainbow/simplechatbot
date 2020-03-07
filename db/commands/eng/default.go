@@ -60,7 +60,7 @@ func DefaultListCommandsModel(channel *models.Channel, botID int64) {
 func DefaultSelfBanGameModel(channel *models.Channel, botID int64) {
 	commandName := "!banme"
 	command, err := commands.BuildCommand(
-		botID, channel.TwitchID, commandName, selfban.SelfBanPluginType, "@$(user) You are banned for 3 seconds")
+		botID, channel.TwitchID, commandName, selfban.BanOneselfPluginType, "@$(user) You are banned for 3 seconds")
 	if err != nil {
 		log.Println("Failed to create a new command:", commandName, err.Error())
 		return

@@ -60,18 +60,21 @@ func NewChatCommandPluginManager(
 	manager.RegisterPlugin(commandplugins.NewListCommandsPlugin(ircClient, repo))
 	manager.RegisterPlugin(commandplugins.NewCommandResponsePlugin(ircClient, repo))
 	manager.RegisterPlugin(games.NewNumberGuesserPlugin(ircClient, repo))
-	manager.RegisterPlugin(selfban.NewSelfBanPlugin(ircClient))
+	manager.RegisterPlugin(selfban.NewBanOnselfPlugin(ircClient))
 	manager.RegisterPlugin(games.NewDicePlugin(ircClient))
 
 	return &manager
 }
 
+// RegisterPlugin registers a new plugin to the manager.
+// It is possible to register the same type of plugin multiple times, in which case there will be multiple workers
+// for the same command.
 func (manager *ChatCommandPluginManager) RegisterPlugin(plugin chatplugins.ChatCommandPluginT) {
 	// Create job channel per plugin type
 	pluginType := plugin.GetPluginType()
 	manager.channelMapMutex.Lock()
 	jobChannel, exists := manager.chanMap[pluginType]
-	if !exists { // Means that the same type of plugin was already registered, and more is being added.
+	if !exists {
 		jobChannel = make(chan WorkItem, JobChanDefaultCapacity)
 		manager.chanMap[pluginType] = jobChannel
 	}
@@ -85,19 +88,20 @@ func (manager *ChatCommandPluginManager) RegisterPlugin(plugin chatplugins.ChatC
 	}()
 }
 
+// ProcessChat parses command form chat message and calls the right plugin if necessary.
 func (manager *ChatCommandPluginManager) ProcessChat(
 	channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage) {
 
 	// Parse command name and get command, if any
-	commandName := GetCommandName(message.Message)
+	commandName := getCommandName(message.Message)
 	command := manager.repo.GetCommandByChannelAndName(channel, commandName)
 	if command == nil { // Chat is not a bot command.
 		return
 	}
 
 	pluginType := command.PluginType
-	chanToAdd := manager.chanMap[pluginType]
-	if chanToAdd != nil {
+	chanToAdd, exists := manager.chanMap[pluginType]
+	if exists {
 		chanToAdd <- WorkItem{command: command, channel: channel, sender: sender, message: message}
 	} else {
 		// chanToAdd shouldn't be nil. This is software bug.
@@ -105,6 +109,7 @@ func (manager *ChatCommandPluginManager) ProcessChat(
 	}
 }
 
+// Close closes all job channels
 func (manager *ChatCommandPluginManager) Close() {
 	// Close all channels
 	manager.channelMapMutex.Lock()
@@ -114,7 +119,7 @@ func (manager *ChatCommandPluginManager) Close() {
 	}
 }
 
-func GetCommandName(text string) string {
+func getCommandName(text string) string {
 	// strings.Fields deals with heading/trailing/non-space whitespaces.
 	fields := strings.Fields(text)
 	if len(fields) == 0 { // This is unlikely, just checking for malicious input
