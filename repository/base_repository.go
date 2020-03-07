@@ -14,17 +14,31 @@ import (
 )
 
 const (
-	BotTableName     = "Bots"
+	// BotTableName DB table name for bots.
+	BotTableName = "Bots"
+
+	// ChannelTableName DB table name for channels.
 	ChannelTableName = "Channels"
 )
 
 var (
-	ErrCommandNotFound      = errors.New("Command name is not found")
+	// ErrCommandNotFound when command name is not found in channelMap
+	ErrCommandNotFound = errors.New("Command name is not found")
+
+	// ErrCommandAlreadyExists when a duplicate command name is added
 	ErrCommandAlreadyExists = errors.New("Command name already exists")
-	ErrChannelNotFound      = errors.New("Channel is not found")
+
+	// ErrChannelNotFound when an accessed channel is not found
+	ErrChannelNotFound = errors.New("Channel is not found")
+
+	// ErrChannelAlreadyExists when a duplicate channel is added
 	ErrChannelAlreadyExists = errors.New("Channel already exists")
-	ErrBotAlreadyExists     = errors.New("Bot already exists")
-	ErrBotAlreadyInChannel  = errors.New("Bot is already running in the channel")
+
+	// ErrBotAlreadyExists when a duplicate bot is added
+	ErrBotAlreadyExists = errors.New("Bot already exists")
+
+	// ErrBotAlreadyInChannel when a bot tries to join a channel where it already is
+	ErrBotAlreadyInChannel = errors.New("Bot is already running in the channel")
 )
 
 // BaseRepositoryT interface to deal with persistent data
@@ -46,6 +60,9 @@ type BaseRepositoryT interface {
 // should start with mutex.RLock() or mutex.Lock().
 // Private functions assume that locks are already obtained.
 // TODO: Create mutex per channel, not per repository.
+
+// BaseRepository is the base repository of all repository structs.
+// All other repository struct should have a reference to this base repository.
 type BaseRepository struct {
 	mutex      sync.RWMutex
 	channelMap map[string]*models.Channel // Channel name -> command name -> command model
@@ -54,6 +71,7 @@ type BaseRepository struct {
 
 var _ BaseRepositoryT = (*BaseRepository)(nil)
 
+// NewBaseRepository creates a new base reposiroty from flag values
 func NewBaseRepository() *BaseRepository {
 	db := dynamo.New(session.New(), &aws.Config{
 		Endpoint:   aws.String(flags.DatabaseEndpoint),
@@ -63,17 +81,15 @@ func NewBaseRepository() *BaseRepository {
 	return NewBaseRepositoryCustomDB(db)
 }
 
+// NewBaseRepositoryCustomDB creates a new base repository from custom DynamoDB struct
 func NewBaseRepositoryCustomDB(db *dynamo.DB) *BaseRepository {
 	repo := &BaseRepository{db: db}
-	// This should be called after initialization because it uses another function of BaseRepository
-	repo.PopulateChannelMap()
+	// This should be called after initialization because it uses another public function of BaseRepository
+	repo.populateChannelMap()
 	return repo
 }
 
-func (repo *BaseRepository) PopulateChannelMap() {
-	repo.mutex.Lock()
-	defer repo.mutex.Unlock()
-
+func (repo *BaseRepository) populateChannelMap() {
 	channelMap := make(map[string]*models.Channel)
 	channels := repo.GetAllChannels()
 	for _, channel := range channels {
@@ -87,6 +103,9 @@ func (repo *BaseRepository) PopulateChannelMap() {
 
 // GetAllBots returns all Bot models in the database.
 func (repo *BaseRepository) GetAllBots() []*models.Bot {
+	repo.mutex.RLock()
+	defer repo.mutex.RUnlock()
+
 	bots := []*models.Bot{}
 	err := repo.db.Table(BotTableName).Scan().Consistent(true).All(&bots)
 	if err != nil {
@@ -97,6 +116,9 @@ func (repo *BaseRepository) GetAllBots() []*models.Bot {
 
 // GetAllChannels returns all Channel models in the database.
 func (repo *BaseRepository) GetAllChannels() []*models.Channel {
+	repo.mutex.RLock()
+	defer repo.mutex.RUnlock()
+
 	channels := []*models.Channel{}
 	err := repo.db.Table(ChannelTableName).Scan().Consistent(true).All(&channels)
 	if err != nil {
@@ -105,8 +127,11 @@ func (repo *BaseRepository) GetAllChannels() []*models.Channel {
 	return channels
 }
 
-// GetAllChannels returns all channels for this bot.
+// GetAllChannelsForBot returns all channels for this bot.
 func (repo *BaseRepository) GetAllChannelsForBot(botID int64) []*models.Channel {
+	repo.mutex.RLock()
+	defer repo.mutex.RUnlock()
+
 	channels := []*models.Channel{}
 	err := repo.db.Table(ChannelTableName).Scan().Consistent(true).Filter(
 		"contains(BotIDs, ?)", botID).All(&channels)
@@ -233,6 +258,7 @@ func (repo *BaseRepository) updateChannel(chanInfo *models.Channel) error {
 	return err
 }
 
+// AddCommand adds a new command
 func (repo *BaseRepository) AddCommand(channel string, commandToAdd *models.Command) error {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
@@ -248,6 +274,7 @@ func (repo *BaseRepository) AddCommand(channel string, commandToAdd *models.Comm
 	return repo.updateChannel(&chanInfo)
 }
 
+// EditCommand edits an existing command
 func (repo *BaseRepository) EditCommand(channel string, commandToEdit *models.Command) error {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
@@ -263,6 +290,7 @@ func (repo *BaseRepository) EditCommand(channel string, commandToEdit *models.Co
 	return repo.updateChannel(&chanInfo)
 }
 
+// DeleteCommand deletes an existing command
 func (repo *BaseRepository) DeleteCommand(channel string, commandToDelete *models.Command) error {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
@@ -291,6 +319,7 @@ func (repo *BaseRepository) getChannelAndCommandExists(
 	return *chanInfo, exists, nil // Make a copy not to make changes to the original
 }
 
+// ListCommands lists commands
 func (repo *BaseRepository) ListCommands(channel string) ([]*models.Command, error) {
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()

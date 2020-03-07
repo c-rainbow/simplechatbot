@@ -6,6 +6,7 @@ import (
 	models "github.com/c-rainbow/simplechatbot/models"
 )
 
+// SingleBotRepositoryT interface for single bot repository
 type SingleBotRepositoryT interface {
 	GetBotInfo() *models.Bot
 	GetAllChannels() []*models.Channel
@@ -16,7 +17,7 @@ type SingleBotRepositoryT interface {
 	ListCommands(channel string) ([]*models.Command, error)
 }
 
-// Repository for a single bot
+// SingleBotRepository repository for a single bot
 type SingleBotRepository struct {
 	botInfo  *models.Bot
 	baseRepo BaseRepositoryT
@@ -24,10 +25,12 @@ type SingleBotRepository struct {
 
 var _ SingleBotRepositoryT = (*SingleBotRepository)(nil)
 
+// NewSingleBotRepository creates a new single bor repository with given bot and base repo.
 func NewSingleBotRepository(botInfo *models.Bot, baseRepo BaseRepositoryT) *SingleBotRepository {
 	return &SingleBotRepository{botInfo: botInfo, baseRepo: baseRepo}
 }
 
+// GetBotInfo returns bot model struct
 func (repo *SingleBotRepository) GetBotInfo() *models.Bot {
 	return repo.botInfo
 }
@@ -39,11 +42,13 @@ func (repo *SingleBotRepository) GetAllChannels() []*models.Channel {
 	return channels
 }
 
+// GetCommandByChannelAndName gets commands by channel name and command name
 func (repo *SingleBotRepository) GetCommandByChannelAndName(
 	channel string, commandName string) *models.Command {
 	return repo.baseRepo.GetCommand(repo.botInfo.TwitchID, channel, commandName)
 }
 
+// AddCommand adds command.
 func (repo *SingleBotRepository) AddCommand(channel string, command *models.Command) error {
 	err := repo.baseRepo.AddCommand(channel, command)
 	if err != nil {
@@ -53,6 +58,7 @@ func (repo *SingleBotRepository) AddCommand(channel string, command *models.Comm
 	return nil
 }
 
+// EditCommand edits command
 func (repo *SingleBotRepository) EditCommand(channel string, command *models.Command) error {
 	err := repo.baseRepo.EditCommand(channel, command)
 	if err != nil {
@@ -62,6 +68,7 @@ func (repo *SingleBotRepository) EditCommand(channel string, command *models.Com
 	return nil
 }
 
+// DeleteCommand deletes command
 func (repo *SingleBotRepository) DeleteCommand(channel string, command *models.Command) error {
 	err := repo.baseRepo.DeleteCommand(channel, command)
 	if err != nil {
@@ -71,6 +78,7 @@ func (repo *SingleBotRepository) DeleteCommand(channel string, command *models.C
 	return nil
 }
 
+// ListCommands lists command
 // TODO: Eventually, point this to a web page
 func (repo *SingleBotRepository) ListCommands(channel string) ([]*models.Command, error) {
 	commands, err := repo.baseRepo.ListCommands(channel)
