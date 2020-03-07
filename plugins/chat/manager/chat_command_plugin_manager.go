@@ -9,31 +9,26 @@ import (
 	"github.com/c-rainbow/simplechatbot/plugins/chat/selfban"
 
 	"github.com/c-rainbow/simplechatbot/client"
-	"github.com/c-rainbow/simplechatbot/models"
 	chatplugins "github.com/c-rainbow/simplechatbot/plugins/chat"
 	"github.com/c-rainbow/simplechatbot/plugins/chat/commandplugins"
 	"github.com/c-rainbow/simplechatbot/repository"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
 
-const (
-	JobChanDefaultCapacity = 100
-)
-
-/*
-Chat command plugin manager. All chat command plugins are registered here,
-and depends on the command, the manager distributes command struct to the right channel.
-
-Each type of plugin has a channel and a worker pool with at least 1 worker, which keeps
-polling from the channel until it closes.
-*/
-
+// ChatCommandPluginManagerT interface for chat command plugin manager
 type ChatCommandPluginManagerT interface {
 	RegisterPlugin(plugin chatplugins.ChatCommandPluginT)
 	ProcessChat(channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage)
 	Close()
 }
 
+/*
+ChatCommandPluginManager Chat command plugin manager. All chat command plugins are registered here,
+and depends on the command, the manager distributes command struct to the right channel.
+
+Each type of plugin has a channel and a worker pool with at least 1 worker, which keeps
+polling from the channel until it closes.
+*/
 type ChatCommandPluginManager struct {
 	channelMapMutex sync.Mutex
 	repo            repository.SingleBotRepositoryT
@@ -42,13 +37,7 @@ type ChatCommandPluginManager struct {
 
 var _ ChatCommandPluginManagerT = (*ChatCommandPluginManager)(nil)
 
-type WorkItem struct {
-	command *models.Command
-	channel string
-	sender  *twitch_irc.User
-	message *twitch_irc.PrivateMessage
-}
-
+// NewChatCommandPluginManager creates a new ChatCommandPluginManager
 func NewChatCommandPluginManager(
 	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) ChatCommandPluginManagerT {
 	manager := ChatCommandPluginManager{
@@ -60,7 +49,7 @@ func NewChatCommandPluginManager(
 	manager.RegisterPlugin(commandplugins.NewListCommandsPlugin(ircClient, repo))
 	manager.RegisterPlugin(commandplugins.NewCommandResponsePlugin(ircClient, repo))
 	manager.RegisterPlugin(games.NewNumberGuesserPlugin(ircClient, repo))
-	manager.RegisterPlugin(selfban.NewBanOnselfPlugin(ircClient))
+	manager.RegisterPlugin(selfban.NewBanOneselfPlugin(ircClient))
 	manager.RegisterPlugin(games.NewDicePlugin(ircClient))
 
 	return &manager
@@ -75,7 +64,7 @@ func (manager *ChatCommandPluginManager) RegisterPlugin(plugin chatplugins.ChatC
 	manager.channelMapMutex.Lock()
 	jobChannel, exists := manager.chanMap[pluginType]
 	if !exists {
-		jobChannel = make(chan WorkItem, JobChanDefaultCapacity)
+		jobChannel = make(chan WorkItem, jobChanDefaultCapacity)
 		manager.chanMap[pluginType] = jobChannel
 	}
 	manager.channelMapMutex.Unlock()

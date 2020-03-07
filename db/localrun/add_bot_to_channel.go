@@ -7,7 +7,7 @@ import (
 	"github.com/c-rainbow/simplechatbot/repository"
 )
 
-// Add new bot to channel
+// AddBotToChannel Add new bot to channel
 func AddBotToChannel() {
 	repo := repository.NewBaseRepository()
 
