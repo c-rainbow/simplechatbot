@@ -27,7 +27,7 @@ func NewBotManagerFromRepository(baseRepo repository.BaseRepositoryT) BotManager
 	botModels := baseRepo.GetAllBots()
 	bots := make([]bot.TwitchChatBotT, len(botModels))
 	for i, botModel := range botModels {
-		bots[i] = bot.NewTwitchChatBotFromRepsitory(botModel, baseRepo)
+		bots[i] = bot.DefaultTwitchChatBot(botModel, baseRepo)
 	}
 
 	return &BotManager{repo: baseRepo, bots: bots}

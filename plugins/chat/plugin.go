@@ -22,5 +22,5 @@ type ChatCommandPluginT interface {
 // ChatListenerPluginT is the common interface for plugins that listen to all chats
 type ChatListenerPluginT interface {
 	GetPluginType() string
-	ListenToChat(channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage)
+	ListenToChat(channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage) bool
 }

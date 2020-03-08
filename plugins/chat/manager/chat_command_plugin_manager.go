@@ -3,7 +3,6 @@ package manager
 import (
 	"log"
 	"strings"
-	"sync"
 
 	"github.com/c-rainbow/simplechatbot/plugins/chat/games"
 	"github.com/c-rainbow/simplechatbot/plugins/chat/selfban"
@@ -19,7 +18,6 @@ import (
 type ChatCommandPluginManagerT interface {
 	RegisterPlugin(plugin chatplugins.ChatCommandPluginT)
 	ProcessChat(channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage)
-	Close()
 }
 
 /*
@@ -30,9 +28,8 @@ Each type of plugin has a channel and a worker pool with at least 1 worker, whic
 polling from the channel until it closes.
 */
 type ChatCommandPluginManager struct {
-	channelMapMutex sync.Mutex
-	repo            repository.SingleBotRepositoryT
-	chanMap         map[string]chan WorkItem
+	repo      repository.SingleBotRepositoryT
+	pluginMap map[string]chatplugins.ChatCommandPluginT // From plugin type name to plugin object
 }
 
 var _ ChatCommandPluginManagerT = (*ChatCommandPluginManager)(nil)
@@ -40,8 +37,7 @@ var _ ChatCommandPluginManagerT = (*ChatCommandPluginManager)(nil)
 // NewChatCommandPluginManager creates a new ChatCommandPluginManager
 func NewChatCommandPluginManager(
 	ircClient client.TwitchClientT, repo repository.SingleBotRepositoryT) ChatCommandPluginManagerT {
-	manager := ChatCommandPluginManager{
-		channelMapMutex: sync.Mutex{}, repo: repo, chanMap: make(map[string]chan WorkItem)}
+	manager := ChatCommandPluginManager{repo: repo, pluginMap: make(map[string]chatplugins.ChatCommandPluginT)}
 
 	manager.RegisterPlugin(commandplugins.NewAddCommandPlugin(ircClient, repo))
 	manager.RegisterPlugin(commandplugins.NewDeleteCommandPlugin(ircClient, repo))
@@ -56,25 +52,8 @@ func NewChatCommandPluginManager(
 }
 
 // RegisterPlugin registers a new plugin to the manager.
-// It is possible to register the same type of plugin multiple times, in which case there will be multiple workers
-// for the same command.
 func (manager *ChatCommandPluginManager) RegisterPlugin(plugin chatplugins.ChatCommandPluginT) {
-	// Create job channel per plugin type
-	pluginType := plugin.GetPluginType()
-	manager.channelMapMutex.Lock()
-	jobChannel, exists := manager.chanMap[pluginType]
-	if !exists {
-		jobChannel = make(chan WorkItem, jobChanDefaultCapacity)
-		manager.chanMap[pluginType] = jobChannel
-	}
-	manager.channelMapMutex.Unlock()
-
-	// The goroutine will automatically close when jobChannel is closed
-	go func() {
-		for workItem := range jobChannel {
-			plugin.ReactToChat(workItem.command, workItem.channel, workItem.sender, workItem.message)
-		}
-	}()
+	manager.pluginMap[plugin.GetPluginType()] = plugin
 }
 
 // ProcessChat parses command form chat message and calls the right plugin if necessary.
@@ -88,23 +67,12 @@ func (manager *ChatCommandPluginManager) ProcessChat(
 		return
 	}
 
-	pluginType := command.PluginType
-	chanToAdd, exists := manager.chanMap[pluginType]
+	plugin, exists := manager.pluginMap[command.PluginType]
 	if exists {
-		chanToAdd <- WorkItem{command: command, channel: channel, sender: sender, message: message}
+		plugin.ReactToChat(command, channel, sender, message)
 	} else {
-		// chanToAdd shouldn't be nil. This is software bug.
-		log.Println("Something is wrong. chanToAdd is nil")
-	}
-}
-
-// Close closes all job channels
-func (manager *ChatCommandPluginManager) Close() {
-	// Close all channels
-	manager.channelMapMutex.Lock()
-	defer manager.channelMapMutex.Unlock()
-	for _, channel := range manager.chanMap {
-		close(channel)
+		// Likely synchronization issue
+		log.Println("No plugin exists for plugin type " + command.PluginType + " and command " + commandName)
 	}
 }
 

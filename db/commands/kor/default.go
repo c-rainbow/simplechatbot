@@ -83,7 +83,7 @@ func DefaultDiceGameModel(channel *models.Channel, botID int64) {
 func DefaultSelfBanGameModel(channel *models.Channel, botID int64) {
 	commandName := "!셀프밴"
 	command, err := commands.BuildCommand(
-		botID, channel.TwitchID, commandName, selfban.BanOneselfPlugin, "@$(user) 님 밴")
+		botID, channel.TwitchID, commandName, selfban.BanOneselfPluginType, "@$(user) 님 밴")
 	if err != nil {
 		log.Println("명령어 '!셀프밴'을 추가하는데 실패하였습니다", err.Error())
 		return
