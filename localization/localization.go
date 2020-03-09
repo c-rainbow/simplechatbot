@@ -39,12 +39,24 @@ var (
 
 // GetAllInstallerLocales all supported installer locales
 func GetAllInstallerLocales() []*common.LocaleConfig {
-	return make([]*common.LocaleConfig, 0)
+	locales := make([]*common.LocaleConfig, 0, 4)
+	for _, locale := range SupportedLocales {
+		if locale.InstallerLocale != nil {
+			locales = append(locales, locale)
+		}
+	}
+	return locales
 }
 
 // GetAllBotResponseLocales all supported bot response locales
 func GetAllBotResponseLocales() []*common.LocaleConfig {
-	return make([]*common.LocaleConfig, 0)
+	locales := make([]*common.LocaleConfig, 0, 4)
+	for _, locale := range SupportedLocales {
+		if locale.BotCommandLocale != nil {
+			locales = append(locales, locale)
+		}
+	}
+	return locales
 }
 
 // GetBotResponseLocale bot response locale from LocaleID
