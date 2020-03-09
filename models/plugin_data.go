@@ -21,6 +21,7 @@ type PluginData struct {
 
 // NewPluginData creates a new PluginData object
 func NewPluginData(pluginType string, channelID int64, key string, value interface{}) *PluginData {
+	// TODO: For now, manually construct primary key like this. Figure out how to configure this using dynamodb library
 	primaryKey := pluginType + "-" + strconv.FormatInt(channelID, 10) + "-" + key
 	return &PluginData{
 		PrimaryKey: primaryKey,
