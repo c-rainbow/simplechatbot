@@ -41,9 +41,9 @@ func (plugin *SpamCheckerPlugin) GetPluginType() string {
 // ListenToChat listens to chat
 func (plugin *SpamCheckerPlugin) ListenToChat(channel string, sender *twitch_irc.User,
 	message *twitch_irc.PrivateMessage) bool {
-	if len(message.Message) > 20 {
+	/*if len(message.Message) > 20 {
 		plugin.ircClient.Say(channel, "message too long")
 		return false
-	}
+	}*/
 	return true
 }
