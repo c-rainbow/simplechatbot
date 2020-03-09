@@ -14,3 +14,13 @@ type LocaleConfig struct {
 	InstallerLocale  *InstallerLocaleConfig
 	BotCommandLocale *BotCommandLocaleConfig
 }
+
+func (locale *LocaleConfig) DateTimeToString(datetime time.Time) string {
+	return locale.DateTimeToStringFunc(datetime)
+}
+
+func (locale *LocaleConfig) DurationToString(duration time.Duration) string {
+	totalSeconds := int(duration.Seconds())
+	d := NewDuration(totalSeconds)
+	return locale.DurationToStringFunc(d)
+}

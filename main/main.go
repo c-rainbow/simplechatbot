@@ -83,10 +83,33 @@ func main() {
 
 	flags.ParseAllFlags()
 
+	/*db := dynamo.New(session.New(), &aws.Config{
+		Endpoint:   aws.String(flags.DatabaseEndpoint),
+		Region:     aws.String(flags.DatabaseRegion),
+		DisableSSL: aws.Bool(flags.DisableSSL),
+	})
+
+	data := []*models.PluginData{}
+	db.Table("PluginData").Get("ID", "TestPluginType2-1234").All(&data)
+	fmt.Printf("len: %d\n", len(data))
+	converted := data[0].Value.(interface{})
+	c2 := converted.(string)
+	fmt.Println(c2)
+
+	//localrun.CreateAllTables()
+
+	*/
+
 	baseRepo := repository.NewBaseRepository()
 	manager := botmanager.NewBotManagerFromRepository(baseRepo)
 	server := botserver.NewBotServer(nil, manager)
 	server.Start()
+
+	//time.Sleep(30 * time.Second)
+
+	//log.Println("Sleep done. shutting down server")
+	//server.Shutdown()
+
 }
 
 // Run bot
