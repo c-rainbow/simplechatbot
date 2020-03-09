@@ -17,9 +17,9 @@ Resolver that handles StreamAPIType variables. It is responsible for
 */
 
 var (
-	// ErrChannelNotFound Channel not found
-	ErrChannelNotFound = errors.New("Channel is not found")
-	defaultResolver    StreamsAPIResolverT
+	// ErrStreamNotFound Stream not found. Likely offline
+	ErrStreamNotFound = errors.New("Stream is not found or offline")
+	defaultResolver   StreamsAPIResolverT
 )
 
 // StreamsAPIResolverT interface for Streams API resolver
@@ -49,7 +49,7 @@ func (resolver *StreamsAPIResolver) Resolve(channel string) (*helix_api.Stream, 
 	}
 	if len(streams) == 0 {
 		log.Println("Stream could not found for channel ", channel)
-		return nil, ErrChannelNotFound
+		return nil, ErrStreamNotFound
 	}
 	return &streams[0], nil
 

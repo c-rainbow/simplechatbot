@@ -40,6 +40,7 @@ func (plugin *CommandResponsePlugin) ReactToChat(
 	// Basic validations
 	err := common.ValidateBasicInputs(command, channel, CommandResponsePluginType, sender, message)
 
+	// This should get response object, resolve variables, then get response text from it
 	responseText, err := plugin.GetResponseText(command, channel, sender, message, err)
 
 	common.SendToChatClient(plugin.ircClient, channel, responseText)

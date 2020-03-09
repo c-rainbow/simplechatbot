@@ -57,7 +57,7 @@ func (plugin *AddCommandPlugin) ReactToChat(
 	if err == nil {
 		// message.RoomID is integer Twitch channel ID. It used to be possible to have multiple rooms in a channel
 		// (therefore multiple roomIDs), but this feature was gone on October 30, 2019.
-		targetCommand, err = plugin.BuildTargetCommand(targetCommandName, targetResponse, message.RoomID)
+		targetCommand, err = plugin.BuildTargetCommand(targetCommandName, targetResponse, message.RoomID, command.LocaleID)
 	}
 	if err == nil {
 		err = plugin.repo.AddCommand(channel, targetCommand)
@@ -83,7 +83,7 @@ func (plugin *AddCommandPlugin) validateTargetCommand(targetCommand *models.Comm
 
 // BuildTargetCommand builds command model from name. Only needed for AddCommand
 func (plugin *AddCommandPlugin) BuildTargetCommand(
-	targetCommandName string, targetResponse string, channelIDStr string) (*models.Command, error) {
+	targetCommandName string, targetResponse string, channelIDStr string, localeID string) (*models.Command, error) {
 	// Convert channelIDstr to int
 	channelID, err := strconv.Atoi(channelIDStr)
 	if err != nil {
@@ -102,8 +102,8 @@ func (plugin *AddCommandPlugin) BuildTargetCommand(
 
 	// TODO: Find a nice, descriptive failure message.
 	// TODO: dynamically get failure message from context (channel language, etc)
-	failureRespopnse := parser.ParseResponse(chatplugins.DefaultFailureMessage)
-	err = parser.Validate(failureRespopnse)
+	failureResponse := parser.ParseResponse(chatplugins.DefaultFailureMessage)
+	err = parser.Validate(failureResponse)
 	if err != nil {
 		log.Println("Failed to validate default failure response")
 		return nil, err
@@ -112,7 +112,7 @@ func (plugin *AddCommandPlugin) BuildTargetCommand(
 	// Build a new Command object. Other fields are auto-initialized.
 	botID := plugin.repo.GetBotInfo().TwitchID
 	targetCommand := models.NewCommand(
-		botID, int64(channelID), targetCommandName, CommandResponsePluginType, defaultResponse, failureRespopnse)
+		botID, int64(channelID), targetCommandName, CommandResponsePluginType, defaultResponse, failureResponse, localeID)
 	return targetCommand, nil
 }
 

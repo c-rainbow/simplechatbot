@@ -52,7 +52,7 @@ type Command struct {
 
 // Create a new Command object with inputs.
 func NewCommand(botID int64, channelID int64, name string, plugintype string, defaultResponse *ParsedResponse,
-	failureReaponse *ParsedResponse) *Command {
+	failureReaponse *ParsedResponse, localeID string) *Command {
 	// Build minimal response map
 	responseMap := map[string]ParsedResponse{
 		DefaultResponseKey:        *defaultResponse,
@@ -69,6 +69,7 @@ func NewCommand(botID int64, channelID int64, name string, plugintype string, de
 		CooldownSecond: 5,
 		Enabled:        true,
 		Group:          "",
+		LocaleID:       localeID,
 	}
 	return &command
 }

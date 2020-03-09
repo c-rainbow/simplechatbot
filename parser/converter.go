@@ -38,7 +38,7 @@ func ConvertResponse(
 			case ArgumentType:
 				converted, err = ConvertArgumentVariables(&token, args)
 			case StreamAPIType:
-				converted, err = ConvertStreamAPIVariables(&token, channel, sender, message, args)
+				converted, err = ConvertStreamAPIVariables(&token, channel, sender, message, locale, args)
 			case UserAPIType:
 				fallthrough
 			case SimpleType:
@@ -81,7 +81,7 @@ func ConvertChatVariables(
 		return channel, nil
 	// TODO: Don't hardcode link
 	case SubscribeLink:
-		return "http://twitch.tv/subs/" + channel, nil
+		return "https://twitch.tv/subs/" + channel, nil
 	default:
 		return "", InvalidVariableNameError
 	}
@@ -102,7 +102,7 @@ func ConvertArgumentVariables(token *models.Token, args []string) (string, error
 }
 
 func ConvertStreamAPIVariables(token *models.Token, channel string, sender *twitch_irc.User,
-	message *twitch_irc.PrivateMessage, args []string) (string, error) {
+	message *twitch_irc.PrivateMessage, locale *l10n.LocaleConfig, args []string) (string, error) {
 	if token.TokenType != models.VariableTokenType {
 		return "", NotVariableTypeError
 	}
@@ -115,12 +115,22 @@ func ConvertStreamAPIVariables(token *models.Token, channel string, sender *twit
 	}
 
 	switch token.VariableName {
-
 	// This case should be updated if more argument indexes are added
+	case Title:
+		return stream.Title, nil
+	case Game:
+		// This is Game name or Game ID?
+		return stream.GameID, nil
 	case Uptime:
-		uptimeDuration := int64(time.Since(stream.StartedAt).Seconds())
-
-		return strconv.FormatInt(uptimeDuration, 10), nil
+		uptimeDuration := time.Since(stream.StartedAt)
+		return locale.DurationToString(uptimeDuration), nil
+	case UptimeAt:
+		startTime := stream.StartedAt
+		return locale.DateTimeToString(startTime), nil
+	case ViewerCount:
+		return strconv.Itoa(stream.ViewerCount), nil
+	case SubscriberCount:
+		return "", VariableNotEnabledError
 	default:
 		return "", InvalidVariableNameError
 	}
