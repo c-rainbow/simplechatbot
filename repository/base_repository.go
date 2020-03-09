@@ -19,6 +19,9 @@ const (
 
 	// ChannelTableName DB table name for channels.
 	ChannelTableName = "Channels"
+
+	// PluginDataTableName DB table name for plugin data
+	PluginDataTableName = "PluginData"
 )
 
 var (
