@@ -4,8 +4,11 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 
+	l10n "github.com/c-rainbow/simplechatbot/localization/common"
 	models "github.com/c-rainbow/simplechatbot/models"
+	"github.com/c-rainbow/simplechatbot/resolver"
 	twitch_irc "github.com/gempir/go-twitch-irc"
 )
 
@@ -18,7 +21,7 @@ var (
 // It is assumed that the response is already validated
 func ConvertResponse(
 	response *models.ParsedResponse, channel string, sender *twitch_irc.User, message *twitch_irc.PrivateMessage,
-	args []string) (string, error) {
+	locale *l10n.LocaleConfig, args []string) (string, error) {
 	var builder strings.Builder
 	for _, token := range response.Tokens {
 		if token.TokenType == models.TextTokenType {
@@ -35,7 +38,7 @@ func ConvertResponse(
 			case ArgumentType:
 				converted, err = ConvertArgumentVariables(&token, args)
 			case StreamAPIType:
-				fallthrough
+				converted, err = ConvertStreamAPIVariables(&token, channel, sender, message, args)
 			case UserAPIType:
 				fallthrough
 			case SimpleType:
@@ -93,6 +96,31 @@ func ConvertArgumentVariables(token *models.Token, args []string) (string, error
 	// This case should be updated if more argument indexes are added
 	case Arg0, Arg1, Arg2, Arg3, Arg4, Arg5:
 		return valueAtIndex(args, token.VariableName)
+	default:
+		return "", InvalidVariableNameError
+	}
+}
+
+func ConvertStreamAPIVariables(token *models.Token, channel string, sender *twitch_irc.User,
+	message *twitch_irc.PrivateMessage, args []string) (string, error) {
+	if token.TokenType != models.VariableTokenType {
+		return "", NotVariableTypeError
+	}
+
+	resolver := resolver.DefaultStreamsAPIResolver()
+
+	stream, err := resolver.Resolve(channel)
+	if err != nil {
+		return "", err
+	}
+
+	switch token.VariableName {
+
+	// This case should be updated if more argument indexes are added
+	case Uptime:
+		uptimeDuration := int64(time.Since(stream.StartedAt).Seconds())
+
+		return strconv.FormatInt(uptimeDuration, 10), nil
 	default:
 		return "", InvalidVariableNameError
 	}

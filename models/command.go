@@ -46,6 +46,8 @@ type Command struct {
 	Enabled bool
 	// Group of commands. Commands can be active/inactive per group.
 	Group string
+	// Locale ID (BCP 47 Code) for default localized message. Fallback to the streamer's if empty
+	LocaleID string
 }
 
 // Create a new Command object with inputs.

@@ -46,7 +46,7 @@ func ConvertToResponseText(
 	}
 
 	// Try parsing the response with parameters
-	converted, err := parser.ConvertResponse(&parsedResponse, channel, sender, message, args)
+	converted, err := parser.ConvertResponse(&parsedResponse, channel, sender, message, nil, args)
 	// This error usually happens when disabled/unsupported variable name is used.
 	// It is usually already checked when command was added, but is double-checked here just in case.
 	if err != nil {

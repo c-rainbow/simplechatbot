@@ -24,6 +24,8 @@ type Channel struct {
 	BotIDs []int64 `dynamo:",set"`
 	// Commands of the channel
 	Commands map[string]Command // `dynamo:",set"`
+	// Channel's preferred locale. Default to en-us if empty
+	LocaleID string
 }
 
 // User describes Twitch user. Not sure when this will be used.

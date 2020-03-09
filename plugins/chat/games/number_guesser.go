@@ -95,7 +95,7 @@ func (plugin *NumberGuesserPlugin) ReactToChat(
 			responseArgs[0] = converted
 		}
 
-		responseText, err = parser.ConvertResponse(parsedResponse, channel, sender, message, responseArgs)
+		responseText, err = parser.ConvertResponse(parsedResponse, channel, sender, message, nil, responseArgs)
 	}
 
 	common.SendToChatClient(plugin.ircClient, channel, responseText)

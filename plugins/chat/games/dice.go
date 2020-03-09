@@ -63,7 +63,7 @@ func (plugin *DicePlugin) ReactToChat(
 		response := diceResponseTexts[index]
 		parsedResponse := parser.ParseResponse(response)
 		args := []string{strconv.Itoa(newNum)}
-		responseText, err = parser.ConvertResponse(parsedResponse, channel, sender, message, args)
+		responseText, err = parser.ConvertResponse(parsedResponse, channel, sender, message, nil, args)
 	}
 
 	common.SendToChatClient(plugin.ircClient, channel, responseText)
